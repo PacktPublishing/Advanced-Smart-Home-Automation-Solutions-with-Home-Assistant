@@ -1,0 +1,15 @@
+- unique_id: binary_sensor.garage_pir
+  name: "garage_pir Sensor"
+  state_topic: "sensor/Garage_Temp_PIR/PIR1"
+  qos: 1
+  payload_on: "ON"
+  payload_off: "OFF"
+  device_class: motion
+        
+- unique_id: binary_sensor.bed_pir
+  name: "bed_pir Sensor"
+  state_topic: "sensor/Bed_PIR/PIR1"
+  qos: 1
+  payload_on: "ON"
+  payload_off: "OFF"
+  device_class: motion    

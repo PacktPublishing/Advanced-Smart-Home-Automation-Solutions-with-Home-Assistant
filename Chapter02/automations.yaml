@@ -1,0 +1,12 @@
+
+- id: '1758603098571'
+  alias: Run Daily Config Github backup
+  description: ''
+  triggers:
+  - trigger: time
+    at: '23:59:00'
+  conditions: []
+  actions:
+  - action: shell_command.run_githubbackup
+    data: {}
+  mode: single

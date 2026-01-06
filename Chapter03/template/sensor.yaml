@@ -1,0 +1,124 @@
+- name: "Total Energy Consumption - WiFi"
+  unit_of_measurement: "kwh"
+  state: >
+    {{ states('sensor.dishwasher_energy_today') | float +
+       states('sensor.refrigerator_energy_today') | float +
+       states('sensor.refrigerator_garage_energy_today') | float +
+       states('sensor.airfryer_energy_today') | float +
+       states('sensor.coffee_machine_energy_today') | float +
+       states('sensor.toaster_energy_today') | float +
+       states('sensor.microwave_energy_today') | float }}
+
+- name: "Hourly Energy Consumption - WiFi+Zigbee"
+  unit_of_measurement: "kwh"
+  state: >
+    {{ states('sensor.hourly_total_energy_wifi') | float +
+       states('sensor.hourly_total_energy_zigbee') | float }}
+       
+- name: "North Temperature Average"
+  unit_of_measurement: "°C"
+  state: >
+    {% set rooms_north = expand('group.all_north_temperature') %}
+    {% set values_north = rooms_north | map(attribute='state') | map('float', default=0) | list %}
+    {% set count_north = values_north | select('ne', 0) | list | length %}
+    {{ (values_north | sum / (count_north if count_north>0 else 1)) | round(1) }}
+
+- name: "South Temperature Average"
+  unit_of_measurement: "°C"
+  state: >
+    {% set rooms_south = expand('group.all_south_temperature') %}
+    {% set values_south = rooms_south | map(attribute='state') | map('float', default=0) | list %}
+    {% set count_south = values_south | select('ne', 0) | list | length %}
+    {{ (values_south | sum / (count_south if count_south>0 else 1)) | round(1) }}
+    
+- name: "Internal Temperature Average"
+  unit_of_measurement: "°C"
+  state: >
+    {% set rooms_all = expand('group.all_internal_temperature') %}
+    {% set values_all = rooms_all | map(attribute='state') | map('float', default=0) | list %}
+    {% set count_all = values_all | select('ne', 0) | list | length %}
+    {{ (values_all | sum / (count_all if count_all>0 else 1)) | round(1) }}
+    
+- name: "Battery Power Sensors"
+  icon: mdi:battery-heart
+  state: >
+    {% set batt_sensor = states.sensor
+      | selectattr('attributes.device_class','eq','battery')
+      | selectattr('attributes.state_class','eq','measurement')
+      | rejectattr('state','in',['unknown','unavailable'])
+      | rejectattr('attributes.icon','defined')
+      | list %}
+    {{ batt_sensor }}
+    
+- name: "Energy Price"
+  unique_id: energy_price
+  unit_of_measurement: "$/kWh"
+  state: >
+    {% set tariff = states('input_select.energy_tariff') %}
+    {% set m = now().month %}
+    {% set summer = m in [5,6,7,8,9] %}   {# May–Sep #}
+    {% if summer %}
+      {# Summer rates #}
+      {{ 0.1437 if tariff == 'Peak' else 0.0729 }}
+    {% else %}
+      {# Winter rates #}
+      {{ 0.0843 if tariff == 'Peak' else 0.0758 }}
+    {% endif %}
+
+# Running cost for the current day (resets at midnight)
+- name: "Refrigerator Garage Energy Cost Today"
+  unique_id: refrigerator_garage_energy_cost_today
+  unit_of_measurement: "$"
+  device_class: monetary
+  state: >
+    {% set kwh = states('sensor.refrigerator_garage_energy_today')|float(0) %}
+    {% set p   = states('sensor.energy_price')|float(0) %}
+    {{ (kwh * p) | round(2) }}
+
+# Simple monthly projection from current daily average
+- name: "Refrigerator Garage Projected Monthly Cost"
+  unique_id: refrigerator_garage_projected_monthly_cost
+  unit_of_measurement: "$"
+  device_class: monetary
+  state: >
+    {% set spent = states('sensor.refrigerator_garage_energy_cost_today')|float(0) %}
+    {% set hour = now().hour + now().minute / 60 %}
+    {% set safe_hour = hour if hour > 0.1 else 0.1 %}
+    {% set daily_avg = spent / (safe_hour / 24) %}
+    {{ (daily_avg * 30) | round(0) }}
+
+- name: "Refrigerator Garage Energy Cost Above Threshold"
+  unique_id: refrigerator_garage_energy_cost_above_threshold
+  unit_of_measurement: "$"
+  icon: mdi:cash-minus
+  state: >
+    {% set over = is_state('binary_sensor.refrigerator_garage_energy_cost_over_threshold_bin', 'on') %}
+    {% set cost = states('sensor.refrigerator_garage_energy_cost_today')|float(0) %}
+    {% set th   = states('input_number.refrigerator_garage_energy_cost_alert_threshold')|float(0) %}
+    {% if over %}
+      {{ (cost - th) | round(2) }}
+    {% else %}
+      0
+    {% endif %}    
+
+# Running cost for the current day (resets at midnight)
+- name: "Energy Cost Today"
+  unique_id: energy_cost_today
+  unit_of_measurement: "$"
+  device_class: monetary
+  state: >
+    {% set kwh = states('sensor.energy_daily_kwh')|float(0) %}
+    {% set p   = states('sensor.energy_price')|float(0) %}
+    {{ (kwh * p) | round(2) }}
+
+# Simple monthly projection from current daily average
+- name: "Projected Monthly Cost"
+  unique_id: projected_monthly_cost
+  unit_of_measurement: "$"
+  device_class: monetary
+  state: >
+    {% set spent = states('sensor.energy_cost_today')|float(0) %}
+    {% set hour  = now().hour + now().minute/60 %}
+    {% set daily_avg = spent / (hour|max(0.1)/24) %}
+    {{ (daily_avg * 30) | round(0) }}
+    

@@ -1,0 +1,16 @@
+- id: '1764558047342'
+  alias: Alert on New Network Device
+  description: Sends a notification when a new WiFi or LAN device joins the network.
+  triggers:
+  - event_type: device_tracker.new_device
+    trigger: event
+  conditions: []
+  actions:
+  - action: notify.mobile_app_iphone_381
+    metadata: {}
+    data:
+      title: 'Security Alert: Unknown Device'
+      message: 'A new device has joined your network.          Name: {{ trigger.event.data.host_name
+        }}          MAC: {{  trigger.event.data.mac }}          Source: {{ trigger.event.data.entity_id
+        }}'
+  mode: single

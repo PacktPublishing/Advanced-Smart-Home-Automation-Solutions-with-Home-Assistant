@@ -1,0 +1,93 @@
+timeforbed:
+  alias: Time For Bed
+  sequence:
+  - condition: time
+    before: 00:00:00
+    after: '20:30:00'
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  mode: single
+  icon: mdi:bed-clock
+turn_on_off_garagemotor_script:
+  alias: Turn On/Off GarageMotor Script
+  sequence:
+  - action: switch.turn_on
+    metadata: {}
+    data: {}
+    target:
+      device_id: 0bfee9aab709f1d5bc16679dda53ede1
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: 500
+  - action: switch.turn_off
+    metadata: {}
+    data: {}
+    target:
+      device_id: 0bfee9aab709f1d5bc16679dda53ede1
+  description: 'GarageMotor - Turn On - wait 500ms - Turn Off '
+  icon: mdi:garage-variant
+fetch_selected_github_file:
+  alias: Fetch selected file from GitHub
+  mode: single
+  fields:
+    owner:
+      description: GitHub owner/org
+      example: your_github_username
+    repo:
+      description: GitHub repository name
+      example: your_repository
+  sequence:
+  - variables:
+      _path: '{{ states(''input_select.github_file_to_fetch'') }}'
+      _ref: '{{ (states(''input_text.github_ref'') | trim) if (states(''input_text.github_ref'')
+        | trim) else ''main'' }}'
+      _dest: '{{ (states(''input_text.github_dest'') | trim) if (states(''input_text.github_dest'')
+        | trim) else states(''input_select.github_file_to_fetch'') }}'
+  - data:
+      owner: '{{ owner }}'
+      repo: '{{ repo }}'
+      ref: '{{ _ref }}'
+      path: '{{ _path }}'
+      dest: '{{ _dest }}'
+    action: shell_command.github_fetch_file
+  - data:
+      title: GitHub Fetch
+      message: Pulled {{ _path }} @ {{ _ref }} into /config/{{ _dest }} from {{ owner
+        }}/{{ repo }}.
+    action: persistent_notification.create
+fetch_selected_file_from_github2:
+  sequence:
+  - variables:
+      _path: '{{ states(''input_select.github_file_to_fetch'') }}'
+      _ref: '{{ (states(''input_text.github_ref'') | trim) if (states(''input_text.github_ref'')
+        | trim) else ''main'' }}'
+      _dest: '{{ (states(''input_text.github_dest'') | trim) if (states(''input_text.github_dest'')
+        | trim) else states(''input_select.github_file_to_fetch'') }}'
+  - action: shell_command.github_fetch_file
+    data:
+      owner: your_username
+      repo: GitHub repository name
+      ref: _ref
+      path: _path
+      dest: _dest
+  - data:
+      title: GitHub Fetch
+      message: Pulled {{ _path }} @ {{ _ref }} into /config/{{ _dest }} from {{ owner
+        }}/{{ repo }}.
+    action: persistent_notification.create
+  alias: Fetch selected file from GitHub2
+  mode: single
+  fields:
+    owner:
+      description: GitHub owner/org
+      example: your_username
+    repo:
+      description: GitHub repository name
+      example: homeassistant
+  description: ''

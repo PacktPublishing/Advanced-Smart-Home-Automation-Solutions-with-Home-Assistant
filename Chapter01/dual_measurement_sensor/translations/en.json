@@ -1,0 +1,24 @@
+{
+  "title": "Dual Measurement Sensor",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Dual Measurement Sensor",
+        "description": "Configure MQTT topics and options for your device.",
+        "data": {
+          "device_id": "Device ID",
+          "temperature_topic": "Temperature topic",
+          "presence_topic": "Presence topic",
+          "temperature_json_path": "Temperature JSON path (e.g. BMP280.Temperature)",
+          "temperature_window": "Temperature window (samples)",
+          "temperature_min_delta": "Minimum delta to publish (°C)",
+          "presence_debounce_ms": "Presence debounce (ms)",
+          "presence_hold_ms": "Presence hold (ms)"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This device is already configured."
+    }
+  }
+}

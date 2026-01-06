@@ -1,0 +1,16 @@
+- id: '1735152041645'
+  alias: Garage Gate Open/Close
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 57afb8a79e8b39ef738b49c94e98f75d
+    type: action
+    subtype: single
+    trigger: device
+  conditions: []
+  actions:
+  - action: script.turn_on_off_garagemotor_script
+    metadata: {}
+    data: {}
+    response_variable: GarageGate_OpenClose
+  mode: single

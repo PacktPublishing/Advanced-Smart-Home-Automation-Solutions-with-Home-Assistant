@@ -1,0 +1,52 @@
+alarm_doors_at_night:
+  alarm_control_panel:
+    - platform: manual
+      name: home_alarm
+      code: 1234
+      arming_time: 30
+      delay_time: 20
+      trigger_time: 4
+
+  homeassistant:
+    customize:
+      alarm_control_panel.home_alarm:
+        icon: mdi:security-home
+        friendly_name: "Home Alarm"
+
+  template:
+    - sensor:
+        - name: "Doors Open Count"
+          unique_id: sensor_doors_open_count
+          state: >
+            {{ expand('group.all_doors') | selectattr('state','eq','on') | list | count }}
+    - sensor:
+        - name: "Doors Open List and Count"
+          unique_id: sensor_doors_open_list_count
+          state: >
+            {% set doors = expand('group.all_doors') | list %}
+            {% set open_doors = doors | selectattr('state','eq','on') | list %}
+            Open doors ({{ open_doors|length }}):
+            {{ open_doors | map(attribute='entity_id') | list }}
+
+  automation:
+    - id: '1758422161490'
+      alias: Notify Door Open at Night
+      description: ''
+      triggers:
+      - trigger: state
+        entity_id:
+        - group.all_doors
+      conditions:
+      - condition: sun
+        after: sunset
+        #before: sunset
+      actions:
+      - action: notify.mobile_app_iphone_9
+        metadata: {}
+        data:
+          message: 'Door open at night: {{ states(''group.all_doors'') }}'
+      - action: notify.mobile_app_iphone_381
+        metadata: {}
+        data:
+          message: 'Door open at night: {{ states(''group.all_doors'') }}'
+      mode: single

@@ -1,0 +1,20 @@
+# book2_integration (dual_measurement_sensor)
+
+This integration listens to a single MQTT base topic (JSON payload) from a device that reports **temperature** and **presence**. It filters noisy readings and exposes:
+
+- `sensor.<device_id>_temperature`
+- `binary_sensor.<device_id>_presence`
+
+## Setup
+
+1. Ensure the **MQTT** integration is configured in Home Assistant.
+2. Install this custom component under `custom_components/dual_measurement_sensor`.
+3. Add via **Settings → Devices & services → Add Integration → book2_integration**.
+
+## Options (set during config flow)
+
+- Base topic (e.g., `home/book2/dev1`)
+- JSON keys for temperature and presence
+- Temperature window (moving average)
+- Minimum delta to publish
+- Presence debounce (ms) and hold (ms)

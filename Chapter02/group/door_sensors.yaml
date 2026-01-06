@@ -1,0 +1,14 @@
+#binary_sensor:
+all_doors:
+  name: All doors
+  entities:
+     - binary_sensor.front_door_door
+     - binary_sensor.kitchen_backyard_door_door
+     - binary_sensor.master_bedroom_backyard_door_door
+     - binary_sensor.garage_door_door
+
+all_garage_gate:
+  name: All garage gate
+  entities:
+     - binary_sensor.garage_gate_door
+     - binary_sensor.z_garage_gate_contact

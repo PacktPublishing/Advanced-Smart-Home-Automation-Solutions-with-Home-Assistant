@@ -1,0 +1,14 @@
+{
+  "domain": "dual_measurement_sensor",
+  "name": "Dual Measurement Sensor",
+  "version": "0.1.0",
+  "codeowners": [
+    "@marcoascarvalho"
+  ],
+  "config_flow": true,
+  "dependencies": ["mqtt"],
+  "documentation": "https://github.com/marcoascarvalho/dual_measurement_sensor",
+  "iot_class": "local_push",
+  "requirements": [],
+  "icon": "mdi:thermometer"
+}

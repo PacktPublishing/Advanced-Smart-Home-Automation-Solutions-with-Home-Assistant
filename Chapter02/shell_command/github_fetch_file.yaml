@@ -1,0 +1,2 @@
+github_fetch_file: >
+  bash -lc "/config/shell_scripts/github_fetch.sh '{{ owner }}' '{{ repo }}' '{{ ref }}' '{{ path }}' '/config/{{ dest }}'"

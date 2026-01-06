@@ -1,0 +1,20 @@
+#temperature sensors:
+all_internal_temperature:
+  name: All internal temperature
+  entities:
+     - sensor.kid1_room_temperature
+     - sensor.kid2_room_temperature
+     - sensor.kitchen_temperature
+     - sensor.master_bedroom_temperature
+
+all_south_temperature:
+  name: All south temperature
+  entities:
+     - sensor.master_bedroom_temperature
+
+all_north_temperature:
+  name: All north temperature
+  entities:
+     - sensor.kid1_room_temperature
+     - sensor.kid2_room_temperature
+     - sensor.kitchen_temperature

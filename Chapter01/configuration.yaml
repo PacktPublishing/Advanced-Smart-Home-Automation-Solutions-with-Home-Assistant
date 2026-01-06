@@ -1,0 +1,51 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+template:
+  - trigger:
+      - platform: state
+        entity_id:
+          - sensor.desk_outlet_current_consumption
+          - sensor.z_computer_outlet_power
+      - platform: time_pattern
+        minutes: "/5"
+    sensor:
+      - name: "Desk Outlet Power (filtered)"
+        unique_id: desk_outlet_power_filtered
+        unit_of_measurement: "W"
+        state: >
+          {% set raw = states('sensor.desk_outlet_current_consumption')|float(0) %} 
+          {% set prev = this.state|float(0) %}  
+          {% set changed = (raw - prev)|abs >= 10 %}  
+          {{ raw if changed or trigger.platform == 'time_pattern' else prev }}
+      - name: "Computer Outlet Power (filtered)"
+        unique_id: computer_outlet_power_filtered
+        unit_of_measurement: "W"
+        state: >
+          {% set raw = states('sensor.z_computer_outlet_power')|float(0) %} 
+          {% set prev = this.state|float(0) %}  
+          {% set changed = (raw - prev)|abs >= 10 %}  
+          {{ raw if changed or trigger.platform == 'time_pattern' else prev }}
+
+recorder:
+  purge_keep_days: 30
+  auto_purge: true
+  auto_repack: true
+  exclude:
+    entities:
+      - sensor.desk_outlet_current_consumption
+      - sensor.z_computer_outlet_power
+      - sensor.desk_outlet_voltage
+      - sensor.desk_outlet_current
+      - sensor.arris_sbg7400ac2_router_download_speed
+      - sensor.arris_sbg7400ac2_router_upload_speed
+      - sensor.date_time
+      - sensor.worldclock_sensor

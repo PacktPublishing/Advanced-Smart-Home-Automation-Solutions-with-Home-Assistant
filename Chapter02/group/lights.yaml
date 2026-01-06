@@ -1,0 +1,5 @@
+living_room:
+  name: Living Room Lamps
+  entities:
+    - switch.diningroomlamp1
+    - switch.livingroomlamp2  

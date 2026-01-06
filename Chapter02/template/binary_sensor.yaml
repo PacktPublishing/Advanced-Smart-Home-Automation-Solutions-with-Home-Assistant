@@ -1,0 +1,29 @@
+- name: "AirFryer Running"
+  delay_off:
+    minutes: 5
+  state: >
+    {{ states('sensor.airfryer_energy_current')|float > 0 }}
+
+- name: "Dishwasher Running"
+  delay_off:
+    minutes: 5
+  state: >
+    {{ states('sensor.dishwasher_energy_current')|float > 0 }}
+          
+- name: "Wash Machine Running"
+  delay_off:
+    minutes: 5
+  state: >
+    {{ states('sensor.z_washing_machine_power')|float > 0 }} 
+    
+- name: "Sandwich Grill on"
+  unique_id: sandwich_grill_on
+  state: >
+    {{ states('sensor.sandwich_grill_energy_current')|float > 0 }} 
+
+- name: "Refrigerator Garage Energy Cost Over Threshold"
+  unique_id: refrigerator_garage_energy_cost_over_threshold
+  state: >
+    {% set cost = states('sensor.refrigerator_garage_energy_cost_today')|float(0) %}
+    {% set th   = states('input_number.refrigerator_garage_energy_cost_alert_threshold')|float(0) %}
+    {{ cost > th }}

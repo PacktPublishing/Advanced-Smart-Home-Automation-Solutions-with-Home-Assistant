@@ -1,0 +1,2 @@
+run_githubbackup: >- 
+   bash -lc '/config/shell_scripts/backup_github.sh' 

@@ -1,0 +1,70 @@
+- &bt_temperature_sensor
+  state_topic: "tele/ESP32_TEMPERATURE_HUB/SENSOR"
+  icon: mdi:thermometer-bluetooth
+  unit_of_measurement: "°C"
+  device_class: temperature 
+        
+- <<: *bt_temperature_sensor  
+  name: "Backyard Temperature"
+  value_template: '{{ value_json.ATC19f133.Temperature }}'
+
+- <<: *bt_temperature_sensor 
+  name: "Kid1_room Temperature"
+  value_template: '{{ value_json.ATC6570e7.Temperature }}'
+
+- <<: *bt_temperature_sensor
+  name: "Kid2_room Temperature"
+  value_template: '{{ value_json.ATC969ab4.Temperature }}'
+        
+- <<: *bt_temperature_sensor
+  name: "kitchen Temperature"
+  value_template: '{{ value_json.ATCad7637.Temperature }}'
+        
+- <<: *bt_temperature_sensor
+  name: "Master Bedroom Temperature"
+  value_template: '{{ value_json.ATC5d22d1.Temperature }}'
+        
+- name: "Energy Peak Hour"
+  state_topic: "home/energy/peak_hour"
+  unit_of_measurement: "kWh"
+  value_template: '{{ value_json.peakHour }}'
+  json_attributes_topic: "home/energy/peak_hour"
+  json_attributes_template: >
+    {
+      "hour": "{{ value_json.hour }}",
+      "friendly_name": "{{ value_json.friendly_name }}"
+    }
+
+- name: "Hourly Total Energy - Wifi"
+  state_topic: "home/energy/total_hour"
+  unit_of_measurement: "kWh"
+  value_template: '{{ value_json.totalHour }}'
+  json_attributes_topic: "home/energy/total_hour"
+  json_attributes_template: >
+    {
+      "hour": "{{ value_json.hour }}",
+      "friendly_name": "{{ value_json.friendly_name }}"
+    }
+       
+- name: "Energy Peak Hour - Zigbee"
+  state_topic: "home/energy/z_peak_hour"
+  unit_of_measurement: "kWh"
+  value_template: '{{ value_json.z_peakHour }}'
+  json_attributes_topic: "home/energy/z_peak_hour"
+  json_attributes_template: >
+    {
+      "hour": "{{ value_json.z_hour }}",
+      "friendly_name": "{{ value_json.friendly_name }}"
+    }
+          
+- name: "Hourly Total Energy - Zigbee"
+  state_topic: "home/energy/z_total_hour"
+  unit_of_measurement: "kWh"
+  value_template: '{{ value_json.z_totalHour }}'
+  json_attributes_topic: "home/energy/z_total_hour"
+  json_attributes_template: >
+    {
+      "hour": "{{ value_json.z_hour }}",
+      "friendly_name": "{{ value_json.friendly_name }}"
+    }
+    
