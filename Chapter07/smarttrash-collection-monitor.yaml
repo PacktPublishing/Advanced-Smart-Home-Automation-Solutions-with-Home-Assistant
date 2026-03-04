@@ -1,0 +1,291 @@
+esphome:
+  name: smarttrash-collection-monitor
+  friendly_name: SmartTrash Collection Monitor
+
+  ############################################################
+  # ON WAKE LOGIC
+  ############################################################
+  on_boot:
+    priority: 200
+    then:
+      ##########################################################
+      # Detect wake source (EXT1) and enable OTA mode if GPIO0
+      ##########################################################
+      - lambda: |-
+          esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
+          if (cause == ESP_SLEEP_WAKEUP_EXT1) {
+            uint64_t wake_mask = esp_sleep_get_ext1_wakeup_status();
+
+            if (wake_mask & (1ULL << 32)) {
+              id(ota_mode) = true;
+              ESP_LOGI("WAKE", "Wake source: OTA button (GPIO32)");
+            }
+
+            // GPIO33 -> MPU INT
+            if (wake_mask & (1ULL << 33)) {
+              ESP_LOGI("WAKE", "Wake source: MPU INT (GPIO33)");
+            }
+          } else {
+            ESP_LOGI("WAKE", "Wake source: %d", (int)cause);
+          }
+
+      ##########################################################
+      # Configure MPU 
+      ##########################################################
+      - lambda: |-
+          // Wake device (clear sleep bit)
+          uint8_t wake_cmd1[2] = {0x6B, 0x00};
+          id(i2c_bus).write(0x68, wake_cmd1, 2);
+
+          // Enable accel and disable Gyro
+          uint8_t wake_cmd2[2] = {0x6C, 0x07};
+          id(i2c_bus).write(0x68, wake_cmd2, 2);
+
+          // Set accelerometer bandwidth (recommended for motion detect)
+          uint8_t accel_cfg2[2] = {0x1D, 0x01};   // ~184Hz bandwidth
+          id(i2c_bus).write(0x68, accel_cfg2, 2);
+
+          // Enable motion interrupt
+          uint8_t int_en[2] = {0x38, 0x40};  // MOT_INT_EN
+          id(i2c_bus).write(0x68, int_en, 2);
+          
+          // Enable Accel Hardware Intelligence: (MOT_DETECT_CTRL 0x69)
+          uint8_t motion_ctrl[2] = {0x69, 0xC0};  // ACCEL_INTEL_EN | ACCEL_INTEL_MODE
+          id(i2c_bus).write(0x68, motion_ctrl, 2);
+
+          // Set motion threshold (tune experimentally)
+          uint8_t motion_thr[2] = {0x1F, 15};  // try 10-20
+          id(i2c_bus).write(0x68, motion_thr, 2);
+
+          // Set Frequency of Wake-up:
+          uint8_t lp_accel_odr[2] = {0x1E, 0x07}; //31.25Hz
+          id(i2c_bus).write(0x68, lp_accel_odr, 2);
+
+          // 8. Enable CYCLE mode (CRITICAL)
+          uint8_t cycle_mode[2] = {0x6B, 0x20};
+          id(i2c_bus).write(0x68, cycle_mode, 2);
+
+          // Configure interrupt pin (active HIGH, push-pull)
+          uint8_t int_cfg[2] = {0x37, 0x00};
+          id(i2c_bus).write(0x68, int_cfg, 2);     
+
+          ESP_LOGI("MPU", "MPU-6500 motion interrupt configured");
+
+      ##########################################################
+      # Debug LED Boot Blink
+      ##########################################################
+      - repeat:
+          count: 3
+          then:
+            - light.turn_on: debug_led
+            - delay: 200ms
+            - light.turn_off: debug_led
+            - delay: 200ms
+
+      ##########################################################
+      # Branch: OTA mode (2 min timeout) OR normal logic
+      ##########################################################
+      - if:
+          condition:
+            lambda: 'return id(ota_mode);'
+          then:
+            - logger.log: "OTA mode active: staying awake for 2 minutes"
+            - delay: 2min
+            - logger.log: "OTA timeout reached: going to deep sleep"
+          else:
+            ######################################################
+            # Wait for API to connect before reading sensors
+            ######################################################
+            - wait_until:
+                condition:
+                  api.connected
+                timeout: 60s
+            - logger.log: "API wait complete (connected or timeout). Proceeding with sensor evaluation."
+            - delay: 5s
+
+            ######################################################
+            # Main Wake Logic (your existing logic)
+            ######################################################
+            - if:
+                condition:
+                  api.connected
+                then:
+                  - lambda: |-
+                      auto now = id(ha_time).now();
+                      if (!now.is_valid()) return;
+
+                      if (now.day_of_week == 4 &&
+                          now.hour >= 06 &&
+                          now.hour < 10) {
+
+                        id(mpu).update();
+
+                        float x = id(accel_x).state;
+                        float y = id(accel_y).state;
+                        float z = id(accel_z).state;
+
+                        float magnitude = sqrt(x*x + y*y + z*z);
+                        float tilt = acos(z / magnitude) * 180.0 / 3.14159;
+
+                        if (magnitude > 5) {
+                          id(trash_outside) = true;
+                        }
+
+                        if (tilt > 120.0 && magnitude > 2.5) {
+                          id(trash_collected) = true;
+                        }
+                      }
+
+                      // Weekly reset
+                      if (now.day_of_week == 4 &&
+                         now.hour >= 11) {
+                       id(trash_outside) = false;
+                       id(trash_collected) = false;
+                      }
+
+      ##########################################################
+      # Clear MPU interrupt before sleeping (prevents re-wake loops)
+      ##########################################################
+      - lambda: |-
+          // Clear MPU interrupt (read INT_STATUS register 0x3A)
+          uint8_t reg = 0x3A;
+          uint8_t int_status = 0;
+
+          id(i2c_bus).write(0x68, &reg, 1);
+          id(i2c_bus).read(0x68, &int_status, 1);
+
+          ESP_LOGD("MPU", "INT_STATUS: 0x%02X", int_status);
+
+      ##########################################################
+      # Enter deep sleep
+      ##########################################################
+      - deep_sleep.enter: deep_sleep_1
+
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "QzhSpstaM10rUbzUh2Wg5AZUDXbfkQpwmpY4JcgtylU="
+
+ota:
+  - platform: esphome
+    password: "4026da0cb76748a39223a661faae01cc"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+safe_mode:
+  boot_is_good_after: 10s
+
+############################################################
+# GLOBAL VARIABLES (Persistent)
+############################################################
+
+globals:
+  - id: trash_outside
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+  - id: trash_collected
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+  - id: ota_mode
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+
+############################################################
+# Debug LED
+############################################################
+
+output:
+  - platform: gpio
+    pin: 2
+    id: debug_led_output
+
+light:
+  - platform: binary
+    name: "Debug LED"
+    id: debug_led
+    output: debug_led_output
+    restore_mode: ALWAYS_OFF
+
+
+############################################################
+# I2C
+############################################################
+
+i2c:
+  id: i2c_bus
+  sda: 21
+  scl: 22
+  frequency: 400kHz
+
+
+############################################################
+# RAW MPU SENSOR (No continuous polling)
+############################################################
+
+sensor:
+  - platform: mpu6050
+    id: mpu
+    address: 0x68
+    update_interval: never
+
+    accel_x:
+      id: accel_x
+    accel_y:
+      id: accel_y
+    accel_z:
+      id: accel_z
+
+
+############################################################
+# STATUS BINARY SENSORS
+############################################################
+
+binary_sensor:
+  - platform: template
+    name: "Trash Outside"
+    lambda: |-
+      return id(trash_outside);
+
+  - platform: template
+    name: "Trash Collected"
+    lambda: |-
+      return id(trash_collected);
+
+
+############################################################
+# TIME SYNC
+############################################################
+
+time:
+  - platform: homeassistant
+    id: ha_time
+
+
+############################################################
+# DEEP SLEEP (MPU INT + OTA button)
+############################################################
+
+deep_sleep:
+  id: deep_sleep_1
+  esp32_ext1_wakeup:
+    pins:
+      - GPIO33   # MPU INT
+      - GPIO32    # OTA button
+    mode: ANY_HIGH

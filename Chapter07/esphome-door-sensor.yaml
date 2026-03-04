@@ -1,0 +1,241 @@
+###############################
+# espHome Main Structure
+###############################
+esphome:
+  name: esphome-door-sensor
+  friendly_name: ESPHome Door Sensor
+  on_boot:
+    priority: -100 # Run after WiFi/API are connected
+    then:
+
+      # 1. START THE WATCHDOG IMMEDIATELY
+      #- script.execute: connection_watchdog
+
+      ###############################
+      # OTA Mode verification
+      ###############################
+      - if:
+          condition:
+            lambda: |-
+              return digitalRead(6) == LOW;
+          then:
+            - lambda: |-
+                id(ota_mode) = true;
+            - script.execute: slow_double_flash
+            - script.execute: ota_timeout
+            #- script.stop: connection_watchdog # Stop the watchdog if we want to stay awake for OTA
+
+      ####################################################
+      # Wait for the data to actually reach Home Assistant
+      ####################################################
+      - wait_until:
+          timeout: 60s
+          condition:
+            api.connected:
+
+      ####################################################
+      # Check connection result
+      ####################################################
+      - if:
+          condition:
+            api.connected:
+          then:
+            # Force battery read
+            - component.update: battery_voltage
+            - component.update: battery_level
+
+            # Publish door state (Pin 7)
+            - lambda: |-
+                id(door_open).publish_state(digitalRead(7));
+
+            #- logger.log:
+            #    level: DEBUG
+            #    format: "Battery level updated, door sensor too"
+            # Small delay to ensure transmission
+            - delay: 3s
+
+      ################################
+      # Decide Whether to Sleep
+      ################################
+      - if:
+          condition:
+            lambda: 'return !id(ota_mode);'
+          then:
+            #- script.stop: connection_watchdog # Clean exit
+            - deep_sleep.enter: my_deep_sleep
+
+bk72xx:
+  board: cb3s
+
+logger:
+  level: NONE
+  baud_rate: 0
+
+api:
+  encryption:
+    key: "AbnIdt/8SHIraAmUi5OcPHL921qHz1i0KzBiBN5vdXE="
+
+ota:
+  - platform: esphome
+    password: "8ca46eaa83c53d4d678c127048df46e3"
+
+# 1. Deep Sleep Configuration
+deep_sleep:
+  id: my_deep_sleep
+  sleep_duration: 24h 
+
+  wakeup_pin:
+    - pin: 
+        number: P7
+        mode: INPUT_PULLDOWN   # prevents floating during sleep
+        allow_other_uses: true
+      wakeup_pin_mode: INVERT_WAKEUP 
+    - pin:
+        number: P6
+        mode: INPUT
+        allow_other_uses: true
+      wakeup_pin_mode: INVERT_WAKEUP   # Wake when button is pressed
+    - pin:
+        number: P24
+        mode: INPUT
+        allow_other_uses: true
+      wakeup_pin_mode: INVERT_WAKEUP   # Wake when button is pressed
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+  fast_connect: true
+  reboot_timeout: 0s
+
+script:
+  - id: slow_single_flash
+    mode: parallel # Allows multiple triggers to call it without blocking
+    then:
+      - light.turn_on: status_led
+      - delay: 500ms
+      - light.turn_off: status_led
+
+  - id: slow_double_flash
+    mode: restart 
+    then:
+      - repeat:
+          count: 2
+          then:
+            - light.turn_on: status_led
+            - delay: 300ms
+            - light.turn_off: status_led
+            - delay: 300ms
+
+  - id: ota_timeout
+    mode: restart
+    then:
+      - delay: 1min
+      - lambda: |-
+          id(ota_mode) = false;
+      - deep_sleep.enter: my_deep_sleep
+
+  - id: connection_watchdog
+    mode: restart
+    then:
+      - delay: 65s # Give it 65 seconds to connect and finish
+      - if:
+          condition:
+            lambda: 'return !id(ota_mode);' # Don't kill it if we are intentionally in OTA mode
+          then:
+            #- logger.log: "Fail-safe: Connection timed out. Force-entering sleep."
+            - deep_sleep.enter: my_deep_sleep
+
+##################################################
+# Battery Voltage Measurement (ADC3, Analog Input)
+##################################################
+sensor:
+  - platform: adc
+    pin: ADC3
+    name: "Battery Voltage"
+    id: battery_voltage
+    #update_interval: never
+    filters:
+     - multiply: 2.4   # adjust based on your resistor divider
+    unit_of_measurement: "V"
+    accuracy_decimals: 2 
+    
+
+################################
+# Battery Percentage Sensor
+################################
+  - platform: template
+    name: "Battery Level"
+    id: battery_level
+    unit_of_measurement: "%"
+    #update_interval: never
+    lambda: |-
+      float v = id(battery_voltage).state;
+      if (v >= 3.3) return 100;
+      if (v <= 2.8) return 0;
+      return (v - 2.8) * 100.0 / (3.3 - 2.8);
+
+################################
+# Status LED (P9, active LOW)
+################################
+output:
+  - platform: gpio
+    pin:
+      number: P9
+      inverted: true
+    id: status_led_output
+
+light:
+  - platform: binary
+    id: status_led
+    name: "Status LED"
+    output: status_led_output
+    restore_mode: ALWAYS_OFF
+
+################################
+# Globals
+################################
+globals:
+
+  - id: ota_mode
+    type: bool
+    restore_value: false
+    initial_value: "false"
+
+################################
+# Binary Sensors
+################################
+binary_sensor:
+
+  # Door sensor (P7, NOT inverted). 
+  # Door Closed = Low
+  # Door Open = High 
+  - platform: gpio
+    id: door_open
+    pin:
+      number: P7
+      mode: INPUT
+      allow_other_uses: true
+    name: "Door Open"
+    device_class: door
+      
+  # Tamper input (P24)
+  - platform: gpio
+    id: tamper_input
+    pin:
+      number: P24
+      mode: INPUT
+      allow_other_uses: true
+    name: "Anti-Theft Input"
+    device_class: tamper
+
+  # Setup for OTA updates (Long press)
+  - platform: gpio
+    id: setup_button
+    pin:
+      number: P6
+      mode: INPUT
+      inverted: true
+      allow_other_uses: true
+    name: "Setup Button"
+

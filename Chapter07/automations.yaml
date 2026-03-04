@@ -1,0 +1,46 @@
+- id: '1772415750082'
+  alias: SmartTrash - Collection Confirmation
+  description: Notify when trash has been collected
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.smarttrash_collection_monitor_trash_collected
+    from: 'off'
+    to: 'on'
+  conditions: []
+  actions:
+  - action: notify.notify
+    metadata: {}
+    data:
+      title: Trash Collected
+      message: The trash has been successfully collected.
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+      milliseconds: 0
+  - action: homeassistant.update_entity
+    metadata: {}
+    data:
+      entity_id:
+      - binary_sensor.smarttrash_collection_monitor_trash_outside
+  mode: single
+- id: '1772416008805'
+  alias: SmartTrash - Missed Placement Alert
+  description: ''
+  triggers:
+  - trigger: time
+    at: 07:45:00
+    weekday:
+    - wed
+  conditions:
+  - condition: state
+    entity_id: binary_sensor.smarttrash_collection_monitor_trash_outside
+    state: 'off'
+  actions:
+  - action: notify.notify
+    metadata: {}
+    data:
+      title: Trash Reminder
+      message: The trash has not been placed outside for collection.
+  mode: single
