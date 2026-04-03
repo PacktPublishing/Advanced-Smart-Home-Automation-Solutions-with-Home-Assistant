@@ -1,0 +1,87 @@
+GPS sensor example
+Publish the message below to the following topic to create the GPS sensor: homeassistant/device/car1_gps/config
+Remove these 3 first lines to keep JSON format
+{
+  "dev": {
+    "ids": "car1_gps",
+    "name": "Car 1 GPS",
+    "mf": "Book2",
+    "mdl": "ESP32 GPS Module",
+    "sw": "1.0"
+  },
+  "o": {
+    "name": "Home Assistant",
+    "sw": "2026.3"
+  },
+  "cmps": {
+    "latitude": {
+      "p": "sensor",
+      "unique_id": "car1_gps_latitude",
+      "name": "Latitude",
+      "state_topic": "car1/gps/raw",
+      "value_template": "{{ value_json.latitude | float(0) }}",
+      "icon": "mdi:latitude",
+      "unit_of_measurement": "°"
+    },
+    "longitude": {
+      "p": "sensor",
+      "unique_id": "car1_gps_longitude",
+      "name": "Longitude",
+      "state_topic": "car1/gps/raw",
+      "value_template": "{{ value_json.longitude | float(0) }}",
+      "icon": "mdi:longitude",
+      "unit_of_measurement": "°"
+    },
+    "speed": {
+      "p": "sensor",
+      "unique_id": "car1_gps_speed",
+      "name": "Speed",
+      "state_topic": "car1/gps/raw",
+      "value_template": "{{ value_json.speed | float(0) }}",
+      "icon": "mdi:speedometer",
+      "unit_of_measurement": "km/h"
+    },
+    "altitude": {
+      "p": "sensor",
+      "unique_id": "car1_gps_altitude",
+      "name": "Altitude",
+      "state_topic": "car1/gps/raw",
+      "value_template": "{{ value_json.altitude | float(0) }}",
+      "unit_of_measurement": "m",
+      "device_class": "distance",
+      "icon": "mdi:image-filter-hdr",
+      "state_class": "measurement"
+    },
+    "satellites": {
+      "p": "sensor",
+      "unique_id": "car1_gps_satellites",
+      "name": "Satellites",
+      "state_topic": "car1/gps/diagnostics",
+      "value_template": "{{ value_json.satellites | int(0) }}",
+      "state_class": "measurement",
+      "icon": "mdi:satellite-variant",
+      "entity_category": "diagnostic"
+    },
+    "hdop": {
+      "p": "sensor",
+      "unique_id": "car1_gps_hdop",
+      "name": "HDOP",
+      "state_topic": "car1/gps/diagnostics",
+      "value_template": "{{ value_json.hdop | float(99) }}",
+      "state_class": "measurement",
+      "icon": "mdi:crosshairs-gps",
+      "entity_category": "diagnostic"
+    }
+  },
+  "availability": [
+    {
+      "topic": "car1/gps/status",
+      "value_template": "{{ value_json.online | string | lower }}",
+      "payload_available": "true",
+      "payload_not_available": "false",
+      "qos": 0
+    }
+  ],
+  "qos": 0
+}
+

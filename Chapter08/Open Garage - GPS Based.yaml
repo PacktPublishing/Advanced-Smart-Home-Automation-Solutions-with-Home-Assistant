@@ -1,0 +1,61 @@
+alias: Open Garage - GPS Based (car1_gps) 
+
+  
+
+trigger: 
+
+  - platform: mqtt 
+
+    topic: car1/gps/raw 
+
+  
+
+conditions: 
+
+  - condition: template 
+
+    value_template: > 
+
+      {% set lat = trigger.payload_json.latitude %} 
+
+      {% set lon = trigger.payload_json.longitude %} 
+
+      {{ distance(lat, lon, state_attr('zone.home', 'latitude'), state_attr('zone.home', 'longitude')) < 0.02 }} 
+
+  
+
+  - condition: state 
+
+    entity_id: binary_sensor.z_garage_gate_contact 
+
+    state: "off" 
+
+  - condition: state  
+
+    entity_id: input_boolean.car1_arrived  
+
+    state: "off" 
+
+ 
+
+actions: 
+
+  - action: script.turn_on_off_garagemotor_script 
+
+    metadata: {}     
+
+    data: {} 
+
+  - action: input_boolean.turn_on  
+
+    metadata: {}  
+
+    data: {}  
+
+    target:  
+
+      entity_id: input_boolean.car1_arrived 
+
+ 
+
+mode: single 

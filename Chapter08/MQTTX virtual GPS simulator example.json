@@ -1,0 +1,55 @@
+MQTTX virtual GPS simulator example
+Publish the message below to the following topic to create the virtual GPS sensor: homeassistant/device/car1_gps/config
+Remove these 3 first lines to keep JSON format
+{ 
+  "dev": { 
+    "ids": "car1_gps", 
+    "name": "Car 1 GPS", 
+    "mf": "Book2", 
+    "mdl": "ESP32 GPS Module", 
+    "sw": "1.0" 
+  }, 
+  "o": { 
+    "name": "Home Assistant", 
+    "sw": "2026.3" 
+  }, 
+  "cmps": { 
+    "latitude": { 
+      "p": "sensor", 
+      "unique_id": "car1_gps_latitude", 
+      "name": "Latitude", 
+      "state_topic": "car1/gps/raw", 
+      "value_template": "{{ value_json.latitude }}", 
+      "unit_of_measurement": "°" 
+    }, 
+    "longitude": { 
+      "p": "sensor", 
+      "unique_id": "car1_gps_longitude", 
+      "name": "Longitude", 
+      "state_topic": "car1/gps/raw", 
+      "value_template": "{{ value_json.longitude }}", 
+      "unit_of_measurement": "°" 
+    }, 
+    "speed": { 
+      "p": "sensor", 
+      "unique_id": "car1_gps_speed", 
+      "name": "Speed", 
+      "state_topic": "car1/gps/raw", 
+      "value_template": "{{ value_json.speed }}", 
+      "unit_of_measurement": "km/h" 
+    }, 
+    "garage_approach": { 
+      "p": "binary_sensor", 
+      "unique_id": "car1_gps_garage_approach", 
+      "name": "Garage Approach", 
+      "state_topic": "car1/gps/garage_approach", 
+      "payload_on": "enter", 
+      "payload_off": "leave", 
+      "device_class": "presence" 
+    } 
+  }, 
+  "availability_topic": "car1/gps/status", 
+  "payload_available": "online", 
+  "payload_not_available": "offline", 
+  "qos": 0 
+} 

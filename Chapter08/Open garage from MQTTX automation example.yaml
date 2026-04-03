@@ -1,0 +1,29 @@
+alias: Test - Open garage from MQTTX (car1_gps) 
+
+triggers: 
+
+  - trigger: mqtt 
+
+    topic: car1/gps/garage_approach 
+
+conditions: 
+
+  - condition: template 
+
+    value_template: "{{ trigger.payload == 'enter' }}" 
+
+  - condition: state 
+
+    entity_id: binary_sensor.z_garage_gate_contact 
+
+    state: "off" 
+
+actions: 
+
+  - action: script.turn_on_off_garagemotor_script 
+
+    metadata: {} 
+
+    data: {} 
+
+mode: single 

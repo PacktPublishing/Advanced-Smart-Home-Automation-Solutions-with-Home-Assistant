@@ -1,0 +1,49 @@
+alias: Reset Garage Arrival Latch (car1_gps) 
+
+description: Resets the arrival latch when the car leaves the Home Zone 
+
+triggers: 
+
+  - trigger: mqtt 
+
+    topic: car1/gps/raw 
+
+conditions: 
+
+  - condition: template 
+
+    value_template: > 
+
+      {% set lat = trigger.payload_json.latitude %}   
+
+      {% set lon = trigger.payload_json.longitude %}   
+
+      {{ distance(lat, lon, state_attr('zone.home', 'latitude'), state_attr('zone.home', 'longitude')) >= 0.03 }}  
+
+  - condition: state 
+
+    entity_id: input_boolean.car1_arrived 
+
+    state: "on" 
+
+actions: 
+
+  - action: script.turn_on_off_garagemotor_script 
+
+    metadata: {} 
+
+    data: {} 
+
+    enabled: false 
+
+  - action: input_boolean.turn_off 
+
+    metadata: {} 
+
+    data: {} 
+
+    target: 
+
+      entity_id: input_boolean.car1_arrived 
+
+mode: single 
