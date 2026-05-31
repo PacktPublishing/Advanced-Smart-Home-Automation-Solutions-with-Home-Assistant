@@ -1,0 +1,44 @@
+hello_world:
+  module: hello
+  class: HelloWorld
+
+security_state_machine:
+  module: security_state_machine
+  class: SecurityStateMachine
+
+  event_name: security_decision_event
+
+  security_status_entity: input_select.security_status
+  last_message_entity: input_text.last_security_message
+
+  notify_services:
+    - notify/mobile_app_iphone_381
+    - notify/mobile_app_iphone_9
+
+  security_lights:
+    - light.fireplacelights
+    - switch.10011dc05f # front lights
+    - light.garagelights
+    - group.living_room
+
+  #motion_light:
+#  module: motion_light
+#  class: MotionLight
+
+#motion_light_timer:
+#  module: motion_light_timer
+#  class: MotionLightTimer
+
+#living_room_motion_light: 
+# module: motion_light_timer2 
+#  class: MotionLightTimer2 
+#  motion_sensor: binary_sensor.bed_pir_sensor 
+#  target_light: switch.change_this_name4 
+#  timeout: 300 
+
+#kitchen_motion_light: 
+#  module: motion_light_timer2 
+#  class: MotionLightTimer2
+#  motion_sensor: binary_sensor.z_theo_pir_aisle_occupancy 
+#  target_light: switch.change_this_name3 
+#  timeout: 180 

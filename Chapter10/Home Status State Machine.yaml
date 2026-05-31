@@ -1,0 +1,70 @@
+alias: Home Status State Machine
+description: ""
+triggers:
+  - trigger: state
+    entity_id:
+      - input_select.home_status_override
+      - zone.home
+  - trigger: time
+    at: "23:59:00"
+  - trigger: time
+    at: "05:30:00"
+  - trigger: homeassistant
+    event: start
+conditions: []
+actions:
+  - variables:
+      override: "{{ states('input_select.home_status_override') }}"
+      people_home: "{{ states('zone.home') | int(0) > 0 }}"
+      is_night: |
+        {{ now().strftime('%H:%M:%S') >= '23:59:00'
+           or now().strftime('%H:%M:%S') < '05:30:00' }}
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ override == 'exempt' }}"
+        sequence:
+          - action: input_select.select_option
+            metadata: {}
+            data:
+              option: exempt
+            target:
+              entity_id: input_select.home_status
+      - conditions:
+          - condition: template
+            value_template: "{{ override == 'party' }}"
+        sequence:
+          - action: input_select.select_option
+            metadata: {}
+            data:
+              option: party
+            target:
+              entity_id: input_select.home_status
+      - conditions:
+          - condition: template
+            value_template: "{{ not people_home }}"
+        sequence:
+          - action: input_select.select_option
+            metadata: {}
+            data:
+              option: away
+            target:
+              entity_id: input_select.home_status
+      - conditions:
+          - condition: template
+            value_template: "{{ people_home and is_night }}"
+        sequence:
+          - action: input_select.select_option
+            metadata: {}
+            data:
+              option: night
+            target:
+              entity_id: input_select.home_status
+    default:
+      - action: input_select.select_option
+        metadata: {}
+        data:
+          option: home
+        target:
+          entity_id: input_select.home_status
+mode: single

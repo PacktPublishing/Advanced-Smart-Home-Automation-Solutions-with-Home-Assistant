@@ -1,0 +1,28 @@
+title: Motion Light Dashboard
+widget_dimensions: [120, 120]
+widget_margins: [6, 6]
+columns: 4
+
+living_room_motion:
+  widget_type: binary_sensor
+  title: Living Room Motion
+  entity: binary_sensor.bed_pir_sensor
+
+living_room_light:
+  widget_type: light
+  title: Living Room Light
+  entity: switch.change_this_name4
+
+kitchen_motion:
+  widget_type: binary_sensor
+  title: Kitchen Motion
+  entity: binary_sensor.z_theo_pir_aisle_occupancy 
+
+kitchen_light:
+  widget_type: light
+  title: Kitchen Light
+  entity: switch.change_this_name4
+
+layout:
+  - living_room_motion(2x1), living_room_light(2x1)
+  - kitchen_motion(2x1), kitchen_light(2x1)

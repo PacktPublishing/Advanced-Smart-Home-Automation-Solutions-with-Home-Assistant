@@ -1,0 +1,11 @@
+menu "Example Connection"
+
+config EXAMPLE_WIFI_SSID
+    string "WiFi SSID"
+    default "YOUR_WIFI_SSID"
+
+config EXAMPLE_WIFI_PASSWORD
+    string "WiFi Password"
+    default "YOUR_WIFI_PASSWORD"
+
+endmenu

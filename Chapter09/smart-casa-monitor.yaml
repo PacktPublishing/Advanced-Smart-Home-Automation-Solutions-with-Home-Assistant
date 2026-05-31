@@ -1,0 +1,1790 @@
+esphome:
+  name: smart-casa-monitor
+  friendly_name: Smart Casa Monitor
+  min_version: 2026.1.0
+  platformio_options:
+    build_flags:
+      - "-DBOARD_HAS_PSRAM"
+    board_build.flash_mode: qio
+    board_build.arduino.memory_type: qio_opi
+  on_boot:
+    priority: -100
+    then:
+      - script.execute: reset_screen_timeout
+      - lambda: |-
+          lv_label_set_text(id(lbl_topic_1), id(topic_1_name).c_str());
+          lv_textarea_set_text(id(txt_topic_1_name), id(topic_1_name).c_str());
+          lv_textarea_set_text(id(txt_topic_1_address), id(topic_1_address).c_str());
+
+          lv_label_set_text(id(lbl_topic_2), id(topic_2_name).c_str());
+          lv_textarea_set_text(id(txt_topic_2_name), id(topic_2_name).c_str());
+          lv_textarea_set_text(id(txt_topic_2_address), id(topic_2_address).c_str());
+
+          lv_label_set_text(id(lbl_topic_3), id(topic_3_name).c_str());
+          lv_textarea_set_text(id(txt_topic_3_name), id(topic_3_name).c_str());
+          lv_textarea_set_text(id(txt_topic_3_address), id(topic_3_address).c_str());
+
+          lv_label_set_text(id(lbl_topic_4), id(topic_4_name).c_str());
+          lv_textarea_set_text(id(txt_topic_4_name), id(topic_4_name).c_str());
+          lv_textarea_set_text(id(txt_topic_4_address), id(topic_4_address).c_str());
+
+          lv_label_set_text(id(lbl_topic_5), id(topic_5_name).c_str());
+          lv_textarea_set_text(id(txt_topic_5_name), id(topic_5_name).c_str());
+          lv_textarea_set_text(id(txt_topic_5_address), id(topic_5_address).c_str());
+
+          lv_label_set_text(id(lbl_topic_6), id(topic_6_name).c_str());
+          lv_textarea_set_text(id(txt_topic_6_name), id(topic_6_name).c_str());
+          lv_textarea_set_text(id(txt_topic_6_address), id(topic_6_address).c_str());
+
+          lv_label_set_text(id(lbl_topic_7), id(topic_7_name).c_str());
+          lv_textarea_set_text(id(txt_topic_7_name), id(topic_7_name).c_str());
+          lv_textarea_set_text(id(txt_topic_7_address), id(topic_7_address).c_str());
+
+          lv_label_set_text(id(lbl_topic_8), id(topic_8_name).c_str());
+          lv_textarea_set_text(id(txt_topic_8_name), id(topic_8_name).c_str());
+          lv_textarea_set_text(id(txt_topic_8_address), id(topic_8_address).c_str());
+
+esp32:
+  board: esp32s3box 
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+      CONFIG_SPIRAM_RODATA: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+
+api:
+  encryption:
+    key: "your_api_key"
+
+ota:
+  - platform: esphome
+    password: "your_ota_password"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  on_connect:
+    then:
+      - lvgl.widget.show: icon_wifi_page_1
+      - lvgl.widget.show: icon_wifi_page_2
+
+  on_disconnect:
+    then:
+      - lvgl.widget.hide: icon_wifi_page_1
+      - lvgl.widget.hide: icon_wifi_page_2
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Smart-Casa-Monitor"
+    password: "your_ap_password"
+
+captive_portal:
+
+mqtt:
+  id: mqtt_client
+  broker: "your_ip_broker_password"
+  port: 1883
+  username: "your_name"
+  password: "your_password"
+  discovery: false
+  reboot_timeout: 0s
+  log_topic: null
+  on_connect:
+    then:
+      - lvgl.widget.show: icon_mqtt_page_1
+      - lvgl.widget.show: icon_mqtt_page_2
+
+  on_disconnect:
+    then:
+      - lvgl.widget.hide: icon_mqtt_page_1
+      - lvgl.widget.hide: icon_mqtt_page_2
+
+web_server:
+  port: 80
+
+# ------------------------------------------------------------
+# I2C
+# GPIO7 / GPIO8 are exposed as the board I2C pins in Waveshare's
+# pinout image. I am using them for the touchscreen bus.
+# ------------------------------------------------------------
+i2c:
+  - id: bus_a
+    sda: GPIO8
+    scl: GPIO7
+
+# ------------------------------------------------------------
+# LCD BACKLIGHT
+# 
+# ------------------------------------------------------------
+output:
+  - platform: ledc
+    pin: GPIO6
+    id: backlight_pwm
+
+light:
+  - platform: monochromatic
+    id: display_backlight
+    output: backlight_pwm
+    restore_mode: ALWAYS_ON
+
+# ------------------------------------------------------------
+# SPI DISPLAY
+# ------------------------------------------------------------
+script:
+  - id: reset_screen_timeout
+    mode: restart
+    then:
+      - light.turn_on:
+          id: display_backlight
+          brightness: 100%
+      - delay: 2min
+      - light.turn_on:
+          id: display_backlight
+          brightness: 20%
+
+  - id: settings_timeout
+    mode: restart
+    then:
+      - delay: 5min
+      - lvgl.page.show:
+          id: page_1
+# ------------------------------------------------------------
+# SPI DISPLAY
+# ------------------------------------------------------------
+spi:
+  - id: lcd_spi
+    clk_pin: GPIO5
+    mosi_pin: GPIO1
+    miso_pin: GPIO2
+
+display:
+  - platform: mipi_spi
+    id: main_display
+    model: ST7796
+    spi_id: lcd_spi
+    #cs_pin: GPIO10
+    dc_pin: GPIO3
+    #reset_pin: GPIO14
+    dimensions:
+      width: 320
+      height: 480
+    #rotation: 0
+    #color_order: bgr
+    invert_colors: true
+
+# ------------------------------------------------------------
+# TOUCHSCREEN
+# ------------------------------------------------------------
+touchscreen:
+  - platform: ft63x6
+    id: main_touch
+    display: main_display
+    i2c_id: bus_a
+    on_touch:
+      then:
+        - script.execute: reset_screen_timeout
+        - script.execute: settings_timeout
+
+binary_sensor:
+  - platform: touchscreen
+    id: touch_debug
+    name: "Touch"
+    x_min: 0
+    x_max: 319
+    y_min: 0
+    y_max: 479
+# ------------------------------------------------------------
+# CAMERA
+# These pins are exact from Waveshare's camera demo.
+# Waveshare's example shows:
+# XCLK=38, SIOD=8, SIOC=7, Y9=21, Y8=39, Y7=40, Y6=42,
+# Y5=46, Y4=48, Y3=47, Y2=45, VSYNC=17, HREF=18, PCLK=41
+# ------------------------------------------------------------
+esp32_camera:
+  id: cam
+  name: Smart Casa Monitor Camera"
+
+  external_clock:
+    pin: GPIO38
+    frequency: 20MHz
+
+  i2c_id: bus_a
+
+  data_pins:
+    - GPIO45
+    - GPIO47
+    - GPIO48
+    - GPIO46
+    - GPIO42
+    - GPIO40
+    - GPIO39
+    - GPIO21
+
+  vsync_pin: GPIO17
+  href_pin: GPIO18
+  pixel_clock_pin: GPIO41
+
+  # OV2640/OV5640 starting settings
+  max_framerate: 12 fps
+  idle_framerate: 0.2 fps
+  resolution: 640x480
+  jpeg_quality: 12
+  contrast: 1
+  brightness: 1
+  saturation: 0
+  vertical_flip: true
+  horizontal_mirror: false
+
+esp32_camera_web_server:
+  - port: 8080
+    mode: stream
+  - port: 8081
+    mode: snapshot
+
+time:
+  - platform: homeassistant
+    id: ha_time
+
+# ------------------------------------------------------------
+# Global Variables
+# ------------------------------------------------------------
+globals:
+  - id: topic_1_state
+    type: bool
+    restore_value: yes
+    initial_value: "false"
+
+  - id: topic_2_state
+    type: bool
+    restore_value: yes
+    initial_value: "false"
+
+  - id: topic_3_state
+    type: bool
+    restore_value: yes
+    initial_value: "false"
+
+  - id: topic_4_state
+    type: bool
+    restore_value: yes
+    initial_value: "false"
+
+  - id: topic_5_state
+    type: bool
+    restore_value: yes
+    initial_value: "false"
+
+  - id: topic_6_state
+    type: bool
+    restore_value: yes
+    initial_value: "false"
+
+  - id: topic_7_state
+    type: bool
+    restore_value: yes
+    initial_value: "false"
+
+  - id: topic_8_state
+    type: bool
+    restore_value: yes
+    initial_value: "false"
+
+  - id: topic_1_name
+    type: std::string
+    restore_value: yes
+    initial_value: '"Fireplace Lights"'
+
+  - id: topic_1_address
+    type: std::string
+    restore_value: yes
+    initial_value: '"cmnd/FireplaceLights/POWER"'
+
+  - id: topic_2_name
+    type: std::string
+    restore_value: yes
+    initial_value: '"Kitchen Fan"'
+
+  - id: topic_2_address
+    type: std::string
+    restore_value: yes
+    initial_value: '"cmnd/KitchenFan/POWER"'
+
+  - id: topic_3_name
+    type: std::string
+    restore_value: yes
+    initial_value: '"Living Room Lamp 1"'
+
+  - id: topic_3_address
+    type: std::string
+    restore_value: yes
+    initial_value: '"cmnd/LivingRoomLamp1/POWER"'
+
+  - id: topic_4_name
+    type: std::string
+    restore_value: yes
+    initial_value: '"Living Room Lamp 2"'
+
+  - id: topic_4_address
+    type: std::string
+    restore_value: yes
+    initial_value: '"cmnd/LivingRoomLamp2/POWER"'
+
+  - id: topic_5_name
+    type: std::string
+    restore_value: yes
+    initial_value: '"Garage Lights"'
+
+  - id: topic_5_address
+    type: std::string
+    restore_value: yes
+    initial_value: '"cmnd/GarageLights/POWER"'
+
+  - id: topic_6_name
+    type: std::string
+    restore_value: yes
+    initial_value: '"Topic6"'
+
+  - id: topic_6_address
+    type: std::string
+    restore_value: yes
+    initial_value: '"home/topic6"'
+
+  - id: topic_7_name
+    type: std::string
+    restore_value: yes
+    initial_value: '"Topic7"'
+
+  - id: topic_7_address
+    type: std::string
+    restore_value: yes
+    initial_value: '"home/topic7"'
+
+  - id: topic_8_name
+    type: std::string
+    restore_value: yes
+    initial_value: '"Topic8"'
+
+  - id: topic_8_address
+    type: std::string
+    restore_value: yes
+    initial_value: '"home/topic8"'
+
+  - id: active_edit_field
+    type: int
+    restore_value: no
+    initial_value: "1"
+
+  - id: return_settings_page
+    type: int
+    restore_value: no
+    initial_value: "1"
+
+# ------------------------------------------------------------
+# LVGL UI
+# ------------------------------------------------------------
+lvgl:
+  pages:
+    - id: page_1
+      bg_color: 0x000000
+      bg_opa: 100%
+      pad_all: 0
+      widgets:
+        - label:
+            id: lbl_time_page_1
+            x: 8
+            y: 12
+            width: 80
+            height: 28
+            text: "--:--"
+            text_color: 0x808080
+            text_font: montserrat_16
+
+        - label:
+            id: icon_wifi_page_1
+            x: 260
+            y: 12
+            width: 28
+            height: 28
+            text: "\uF1EB"   
+            text_font: montserrat_14
+            text_color: 0x808080
+            hidden: true
+
+        - label:
+            id: icon_mqtt_page_1
+            x: 290
+            y: 12
+            width: 28
+            height: 28
+            text: "M"   
+            text_font: montserrat_14
+            text_color: 0x808080
+            hidden: true
+
+        - label:
+            id: lbl_title_page_1
+            x: 55
+            y: 35
+            text: "Smart Multi Switch"
+            text_color: 0xFFFFFF
+            text_align: CENTER
+            text_font: montserrat_24
+
+        - obj:
+            id: header_divider_container_page_1
+            x: 40
+            y: 85
+            width: 240
+            height: 10
+            bg_color: 0x070E1B
+            bg_opa: 0%
+            border_width: 0
+            radius: 0
+            pad_all: 0
+            widgets:
+              - bar:
+                  id: header_divider_line_page_1
+                  x: 0
+                  y: 6
+                  width: 240
+                  height: 2
+                  value: 100
+                  min_value: 0
+                  max_value: 100
+                  indicator:
+                    bg_color: 0x8E9FB8
+                    radius: 0
+                  bg_color: 0x8E9FB8
+                  bg_opa: 40%
+                  radius: 9999
+
+        - button:
+            id: btn_topic_1
+            x: 55
+            y: 105
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            text_color: 0x080807
+            widgets:
+              - label:
+                  id: lbl_topic_1
+                  align: CENTER
+                  text: "..."
+                  text_color: 0x080807
+            on_press:
+              then:
+                - lambda: |-
+                    id(topic_1_state) = !id(topic_1_state);
+
+                    const char *topic = id(topic_1_address).c_str();
+                    const char *payload = id(topic_1_state) ? "ON" : "OFF";
+
+                    lv_obj_set_style_bg_color(
+                      id(btn_topic_1),
+                      lv_color_hex(id(topic_1_state) ? 0x87CEFA : 0xFFFFFF),
+                      LV_PART_MAIN
+                    );
+
+                    id(mqtt_client).publish(topic, payload);
+
+        - button:
+            id: btn_topic_2
+            x: 55
+            y: 185
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            text_color: 0x080807
+            widgets:
+              - label:
+                  id: lbl_topic_2
+                  align: CENTER
+                  text: "..."
+                  text_color: 0x080807
+            on_press:
+              then:
+                - lambda: |-
+                    id(topic_2_state) = !id(topic_2_state);
+
+                    const char *topic = id(topic_2_address).c_str();
+                    const char *payload = id(topic_2_state) ? "ON" : "OFF";
+
+                    lv_obj_set_style_bg_color(
+                      id(btn_topic_2),
+                      lv_color_hex(id(topic_2_state) ? 0x87CEFA : 0xFFFFFF),
+                      LV_PART_MAIN
+                    );
+
+                    id(mqtt_client).publish(topic, payload);
+
+        - button:
+            id: btn_topic_3
+            x: 55
+            y: 265
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            text_color: 0x080807
+            widgets:
+              - label:
+                  id: lbl_topic_3
+                  align: CENTER
+                  text: "..."
+                  text_color: 0x080807
+            on_press:
+              then:
+                - lambda: |-
+                    id(topic_3_state) = !id(topic_3_state);
+
+                    const char *topic = id(topic_3_address).c_str();
+                    const char *payload = id(topic_3_state) ? "ON" : "OFF";
+
+                    lv_obj_set_style_bg_color(
+                      id(btn_topic_3),
+                      lv_color_hex(id(topic_3_state) ? 0x87CEFA : 0xFFFFFF),
+                      LV_PART_MAIN
+                    );
+
+                    id(mqtt_client).publish(topic, payload);
+
+        - button:
+            id: btn_topic_4
+            x: 55
+            y: 345
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            border_color: 0x000000
+            text_color: 0x080807
+            widgets:
+              - label:
+                  id: lbl_topic_4
+                  align: CENTER
+                  text: "..."
+                  text_color: 0x080807
+            on_press:
+              then:
+                - lambda: |-
+                    id(topic_4_state) = !id(topic_4_state);
+
+                    const char *topic = id(topic_4_address).c_str();
+                    const char *payload = id(topic_4_state) ? "ON" : "OFF";
+
+                    lv_obj_set_style_bg_color(
+                      id(btn_topic_4),
+                      lv_color_hex(id(topic_4_state) ? 0x87CEFA : 0xFFFFFF),
+                      LV_PART_MAIN
+                    );
+
+                    id(mqtt_client).publish(topic, payload);
+
+        - obj:
+            id: nav_bar_page_1
+            x: 0
+            y: 432
+            width: 320
+            height: 48
+            bg_color: 0xF4F5F5
+            bg_opa: 95%
+            border_width: 0
+            radius: 0
+            pad_all: 0
+            widgets:
+              - button:
+                  id: nav_prev_page_1
+                  x: 0
+                  y: 0
+                  width: 107
+                  height: 48
+                  bg_color: 0xF4F5F5
+                  bg_opa: 0%
+                  border_width: 0
+                  outline_width: 0
+                  shadow_width: 0
+                  radius: 0
+                  pad_all: 0
+                  clickable: false
+                  widgets:
+                    - label:
+                        id: lbl_nav_prev_page_1
+                        align: CENTER
+                        text: "\uF053"
+                        text_font: montserrat_40
+                        text_align: CENTER
+                        text_color: 0x808080
+
+              - button:
+                  id: nav_settings_page_1
+                  x: 107
+                  y: 0
+                  width: 106
+                  height: 48
+                  bg_color: 0xF4F5F5
+                  bg_opa: 0%
+                  border_width: 0
+                  outline_width: 0
+                  shadow_width: 0
+                  radius: 0
+                  pad_all: 0
+                  on_press:
+                    then:
+                      - script.execute: settings_timeout
+                      - lvgl.page.show:
+                          id: page_topic_settings_1
+                  widgets:
+                    - label:
+                        id: lbl_nav_settings_page_1
+                        align: CENTER
+                        text: "\uF013"
+                        text_font: montserrat_32
+                        text_align: CENTER
+                        text_color: 0x080807
+                        
+
+              - button:
+                  id: nav_next_page_1
+                  x: 213
+                  y: 0
+                  width: 107
+                  height: 48
+                  bg_color: 0xF4F5F5
+                  bg_opa: 0%
+                  border_width: 0
+                  outline_width: 0
+                  shadow_width: 0
+                  radius: 0
+                  pad_all: 0
+                  on_press:
+                    then:
+                      - lvgl.page.show:
+                          id: page_2
+                  widgets:
+                    - label:
+                        id: lbl_nav_next_page_1
+                        align: CENTER
+                        text: "\uF054"
+                        text_font: montserrat_40
+                        text_align: CENTER
+                        text_color: 0x080807
+
+    - id: page_2
+      bg_color: 0x000000
+      pad_all: 0
+      widgets:
+        - label:
+            id: lbl_time_page_2
+            x: 8
+            y: 12
+            width: 80
+            height: 28
+            text: "--:--"
+            text_color: 0x808080
+            text_font: montserrat_16
+
+        - label:
+            id: icon_wifi_page_2
+            x: 260
+            y: 12
+            width: 28
+            height: 28
+            text: "\uF1EB"
+            text_font: montserrat_14
+            text_color: 0x808080
+            hidden: true
+
+        - label:
+            id: icon_mqtt_page_2
+            x: 290
+            y: 12
+            width: 28
+            height: 28
+            text: "M"
+            text_font: montserrat_14
+            text_color: 0x808080
+            hidden: true
+        
+        - label:
+            id: lbl_title_page_2
+            x: 55
+            y: 35
+            text: "Smart Multi Switch"
+            text_color: 0xFFFFFF
+            text_align: CENTER
+            text_font: montserrat_24
+
+        - obj:
+            id: header_divider_container_page_2
+            x: 40
+            y: 85
+            width: 240
+            height: 10
+            bg_color: 0x070E1B
+            bg_opa: 0%
+            border_width: 0
+            outline_width: 0
+            shadow_width: 0
+            radius: 0
+            pad_all: 0
+            widgets:
+              - bar:
+                  id: header_divider_line_page_2
+                  x: 0
+                  y: 6
+                  width: 240
+                  height: 2
+                  value: 100
+                  min_value: 0
+                  max_value: 100
+                  indicator:
+                    bg_color: 0x8E9FB8
+                    radius: 0
+                  bg_color: 0x8E9FB8
+                  bg_opa: 40%
+                  radius: 9999
+
+        - button:
+            id: btn_topic_5
+            x: 55
+            y: 105
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            text_color: 0x080807
+            widgets:
+              - label:
+                  id: lbl_topic_5
+                  align: CENTER
+                  text: "..."
+                  text_color: 0x080807
+            on_press:
+              then:
+                - lambda: |-
+                    id(topic_5_state) = !id(topic_5_state);
+
+                    const char *topic = id(topic_5_address).c_str();
+                    const char *payload = id(topic_5_state) ? "ON" : "OFF";
+
+                    lv_obj_set_style_bg_color(
+                      id(btn_topic_5),
+                      lv_color_hex(id(topic_5_state) ? 0x87CEFA : 0xFFFFFF),
+                      LV_PART_MAIN
+                    );
+
+                    id(mqtt_client).publish(topic, payload);
+
+        - button:
+            id: btn_topic_6
+            x: 55
+            y: 185
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            text_color: 0x080807
+            widgets:
+              - label:
+                  id: lbl_topic_6
+                  align: CENTER
+                  text: "..."
+                  text_color: 0x080807
+            on_press:
+              then:
+                - lambda: |-
+                    id(topic_6_state) = !id(topic_6_state);
+
+                    const char *topic = id(topic_6_address).c_str();
+                    const char *payload = id(topic_6_state) ? "ON" : "OFF";
+
+                    lv_obj_set_style_bg_color(
+                      id(btn_topic_6),
+                      lv_color_hex(id(topic_6_state) ? 0x87CEFA : 0xFFFFFF),
+                      LV_PART_MAIN
+                    );
+
+                    id(mqtt_client).publish(topic, payload);
+
+        - button:
+            id: btn_topic_7
+            x: 55
+            y: 265
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            text_color: 0x080807
+            widgets:
+              - label:
+                  id: lbl_topic_7
+                  align: CENTER
+                  text: "..."
+                  text_color: 0x080807
+            on_press:
+              then:
+                - lambda: |-
+                    id(topic_7_state) = !id(topic_7_state);
+
+                    const char *topic = id(topic_7_address).c_str();
+                    const char *payload = id(topic_7_state) ? "ON" : "OFF";
+
+                    lv_obj_set_style_bg_color(
+                      id(btn_topic_7),
+                      lv_color_hex(id(topic_7_state) ? 0x87CEFA : 0xFFFFFF),
+                      LV_PART_MAIN
+                    );
+
+                    id(mqtt_client).publish(topic, payload);
+
+        - button:
+            id: btn_topic_8
+            x: 55
+            y: 345
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            text_color: 0x080807
+            widgets:
+              - label:
+                  id: lbl_topic_8
+                  align: CENTER
+                  text: "..."
+                  text_color: 0x080807
+            on_press:
+              then:
+                - lambda: |-
+                    id(topic_8_state) = !id(topic_8_state);
+
+                    const char *topic = id(topic_8_address).c_str();
+                    const char *payload = id(topic_8_state) ? "ON" : "OFF";
+
+                    lv_obj_set_style_bg_color(
+                      id(btn_topic_8),
+                      lv_color_hex(id(topic_8_state) ? 0x87CEFA : 0xFFFFFF),
+                      LV_PART_MAIN
+                    );
+
+                    id(mqtt_client).publish(topic, payload);
+
+        - obj:
+            id: nav_bar_page_2
+            x: 0
+            y: 432
+            width: 320
+            height: 48
+            bg_color: 0xF4F5F5
+            bg_opa: 95%
+            border_width: 0
+            radius: 0
+            pad_all: 0
+            widgets:
+              - button:
+                  id: nav_prev_page_2
+                  x: 0
+                  y: 0
+                  width: 107
+                  height: 48
+                  bg_color: 0xF4F5F5
+                  bg_opa: 0%
+                  border_width: 0
+                  outline_width: 0
+                  shadow_width: 0
+                  radius: 0
+                  pad_all: 0
+                  on_press:
+                    then:
+                      - lvgl.page.show:
+                          id: page_1
+                  widgets:
+                    - label:
+                        id: lbl_nav_prev_page_2
+                        align: CENTER
+                        text: "\uF053"
+                        text_font: montserrat_40
+                        text_align: CENTER
+                        text_color: 0x080807
+
+              - button:
+                  id: nav_settings_page_2
+                  x: 107
+                  y: 0
+                  width: 106
+                  height: 48
+                  bg_color: 0xF4F5F5
+                  bg_opa: 0%
+                  border_width: 0
+                  outline_width: 0
+                  shadow_width: 0
+                  radius: 0
+                  pad_all: 0
+                  on_press:
+                    then:
+                      - script.execute: settings_timeout
+                      - lvgl.page.show:
+                          id: page_topic_settings_2
+                  widgets:
+                    - label:
+                        id: lbl_nav_settings_page_2
+                        align: CENTER
+                        text: "\uF013"
+                        text_font: montserrat_32
+                        text_align: CENTER
+                        text_color: 0x080807
+
+              - button:
+                  id: nav_next_page_2
+                  x: 213
+                  y: 0
+                  width: 107
+                  height: 48
+                  bg_color: 0xF4F5F5
+                  bg_opa: 0%
+                  border_width: 0
+                  outline_width: 0
+                  shadow_width: 0
+                  radius: 0
+                  pad_all: 0
+                  clickable: false
+                  widgets:
+                    - label:
+                        id: lbl_nav_next_page_2
+                        align: CENTER
+                        text: "\uF054"
+                        text_font: montserrat_40
+                        text_align: CENTER
+                        text_color: 0x808080
+    
+
+    - id: page_topic_settings_1
+      bg_color: 0x000000
+      bg_opa: 100%
+      pad_all: 0
+      widgets:
+        - label:
+            id: lbl_topic_settings_1_title
+            x: 45
+            y: 20
+            text: "Topic Settings (1 - 4)"
+            text_color: 0xFFFFFF
+            text_font: montserrat_24
+
+        - obj:
+            id: topic_settings_1_divider
+            x: 20
+            y: 65
+            width: 280
+            height: 2
+            bg_color: 0x87CEFA
+            bg_opa: 100%
+            border_width: 0
+            radius: 0
+
+        - label:
+            id: lbl_topic_settings_1_description
+            x: 20
+            y: 80
+            width: 280
+            text: "Button names and MQTT topics."
+            text_color: 0xFFFFFF
+            text_font: montserrat_14
+
+        # Topic 1
+        - label:
+            id: lbl_topic_1_settings
+            x: 20
+            y: 115
+            text: "Topic 1"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_1_name
+            x: 20
+            y: 145
+            width: 125
+            height: 38
+            text: ""
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 1;
+                    id(return_settings_page) = 1;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 1 Name");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_1_name)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        - textarea:
+            id: txt_topic_1_address
+            x: 155
+            y: 145
+            width: 145
+            height: 38
+            text: ""
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 2;
+                    id(return_settings_page) = 1;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 1 Address");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_1_address)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        # Topic 2
+        - label:
+            id: lbl_topic_2_settings
+            x: 20
+            y: 195
+            text: "Topic 2"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_2_name
+            x: 20
+            y: 225
+            width: 125
+            height: 38
+            text: ""
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 3;
+                    id(return_settings_page) = 1;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 2 Name");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_2_name)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        - textarea:
+            id: txt_topic_2_address
+            x: 155
+            y: 225
+            width: 145
+            height: 38
+            text: ""
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 4;
+                    id(return_settings_page) = 1;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 2 Address");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_2_address)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        # Topic 3
+        - label:
+            id: lbl_topic_3_settings
+            x: 20
+            y: 275
+            text: "Topic 3"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_3_name
+            x: 20
+            y: 305
+            width: 125
+            height: 38
+            text: ""
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 5;
+                    id(return_settings_page) = 1;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 3 Name");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_3_name)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        - textarea:
+            id: txt_topic_3_address
+            x: 155
+            y: 305
+            width: 145
+            height: 38
+            text: ""
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 6;
+                    id(return_settings_page) = 1;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 3 Address");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_3_address)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        # Topic 4
+        - label:
+            id: lbl_topic_4_settings
+            x: 20
+            y: 355
+            text: "Topic 4"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_4_name
+            x: 20
+            y: 385
+            width: 125
+            height: 38
+            text: ""
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 7;
+                    id(return_settings_page) = 1;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 4 Name");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_4_name)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        - textarea:
+            id: txt_topic_4_address
+            x: 155
+            y: 385
+            width: 145
+            height: 38
+            text: ""
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 8;
+                    id(return_settings_page) = 1;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 4 Address");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_4_address)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        - button:
+            id: btn_save_topic_settings_1
+            x: 80
+            y: 438
+            width: 160
+            height: 38
+            bg_color: 0x87CEFA
+            bg_opa: 100%
+            border_width: 0
+            radius: 8
+            on_press:
+              then:
+                - lambda: |-
+                    id(topic_1_name) = lv_textarea_get_text(id(txt_topic_1_name));
+                    id(topic_1_address) = lv_textarea_get_text(id(txt_topic_1_address));
+
+                    lv_label_set_text(id(lbl_topic_1), id(topic_1_name).c_str());
+
+                    id(topic_2_name) = lv_textarea_get_text(id(txt_topic_2_name));
+                    id(topic_2_address) = lv_textarea_get_text(id(txt_topic_2_address));
+
+                    lv_label_set_text(id(lbl_topic_2), id(topic_2_name).c_str());
+
+                    id(topic_3_name) = lv_textarea_get_text(id(txt_topic_3_name));
+                    id(topic_3_address) = lv_textarea_get_text(id(txt_topic_3_address));
+
+                    lv_label_set_text(id(lbl_topic_3), id(topic_3_name).c_str());
+
+                    id(topic_4_name) = lv_textarea_get_text(id(txt_topic_4_name));
+                    id(topic_4_address) = lv_textarea_get_text(id(txt_topic_4_address));
+
+                    lv_label_set_text(id(lbl_topic_4), id(topic_4_name).c_str());
+
+                - script.stop: settings_timeout
+                - lvgl.page.show:
+                    id: page_1         
+            widgets:
+              - label:
+                  id: lbl_save_topic_settings_1
+                  align: CENTER
+                  text: "SAVE"
+                  text_color: 0x000000
+                  text_font: montserrat_20
+
+    - id: page_topic_settings_2
+      bg_color: 0x000000
+      bg_opa: 100%
+      pad_all: 0
+      widgets:
+        - label:
+            id: lbl_topic_settings_2_title
+            x: 45
+            y: 20
+            text: "Topic Settings (5 - 8)"
+            text_color: 0xFFFFFF
+            text_font: montserrat_24
+
+        - obj:
+            id: topic_settings_2_divider
+            x: 20
+            y: 65
+            width: 280
+            height: 2
+            bg_color: 0x87CEFA
+            bg_opa: 100%
+            border_width: 0
+            radius: 0
+
+        - label:
+            id: lbl_topic_settings_2_description
+            x: 20
+            y: 80
+            width: 280
+            text: "Button names and MQTT topics."
+            text_color: 0xFFFFFF
+            text_font: montserrat_14
+
+        # Topic 5
+        - label:
+            id: lbl_topic_5_settings
+            x: 20
+            y: 115
+            text: "Topic 5"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_5_name
+            x: 20
+            y: 145
+            width: 125
+            height: 38
+            text: ""
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 9;
+                    id(return_settings_page) = 2;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 5 Name");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_5_name)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        - textarea:
+            id: txt_topic_5_address
+            x: 155
+            y: 145
+            width: 145
+            height: 38
+            text: ""
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 10;
+                    id(return_settings_page) = 2;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 5 Address");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_5_address)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        # Topic 6
+        - label:
+            id: lbl_topic_6_settings
+            x: 20
+            y: 195
+            text: "Topic 6"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_6_name
+            x: 20
+            y: 225
+            width: 125
+            height: 38
+            text: ""
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 11;
+                    id(return_settings_page) = 2;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 6 Name");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_6_name)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        - textarea:
+            id: txt_topic_6_address
+            x: 155
+            y: 225
+            width: 145
+            height: 38
+            text: ""
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 12;
+                    id(return_settings_page) = 2;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 6 Address");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_6_address)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        # Topic 7
+        - label:
+            id: lbl_topic_7_settings
+            x: 20
+            y: 275
+            text: "Topic 7"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_7_name
+            x: 20
+            y: 305
+            width: 125
+            height: 38
+            text: ""
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 13;
+                    id(return_settings_page) = 2;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 7 Name");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_7_name)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        - textarea:
+            id: txt_topic_7_address
+            x: 155
+            y: 305
+            width: 145
+            height: 38
+            text: ""
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 14;
+                    id(return_settings_page) = 2;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 7 Address");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_7_address)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        # Topic 8
+        - label:
+            id: lbl_topic_8_settings
+            x: 20
+            y: 355
+            text: "Topic 8"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_8_name
+            x: 20
+            y: 385
+            width: 125
+            height: 38
+            text: ""
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 15;
+                    id(return_settings_page) = 2;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 8 Name");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_8_name)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        - textarea:
+            id: txt_topic_8_address
+            x: 155
+            y: 385
+            width: 145
+            height: 38
+            text: ""
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x808080
+            border_width: 1
+            radius: 6
+            on_focus:
+              then:
+                - lambda: |-
+                    id(active_edit_field) = 16;
+                    id(return_settings_page) = 2;
+                    lv_label_set_text(id(lbl_text_editor_title), "Edit Topic 8 Address");
+                    lv_textarea_set_text(id(txt_editor_value), lv_textarea_get_text(id(txt_topic_8_address)));
+                - lvgl.keyboard.update:
+                    id: editor_keyboard
+                    textarea: txt_editor_value
+                - script.execute: settings_timeout
+                - lvgl.page.show:
+                    id: page_text_editor
+
+        - button:
+            id: btn_save_topic_settings_2
+            x: 80
+            y: 438
+            width: 160
+            height: 38
+            bg_color: 0x87CEFA
+            bg_opa: 100%
+            border_width: 0
+            radius: 8
+            on_press:
+              then:
+                - lambda: |-
+                    id(topic_5_name) = lv_textarea_get_text(id(txt_topic_5_name));
+                    id(topic_5_address) = lv_textarea_get_text(id(txt_topic_5_address));
+
+                    lv_label_set_text(id(lbl_topic_5), id(topic_5_name).c_str());
+
+                    id(topic_6_name) = lv_textarea_get_text(id(txt_topic_6_name));
+                    id(topic_6_address) = lv_textarea_get_text(id(txt_topic_6_address));
+
+                    lv_label_set_text(id(lbl_topic_6), id(topic_6_name).c_str());
+
+                    id(topic_7_name) = lv_textarea_get_text(id(txt_topic_7_name));
+                    id(topic_7_address) = lv_textarea_get_text(id(txt_topic_7_address));
+
+                    lv_label_set_text(id(lbl_topic_7), id(topic_7_name).c_str());
+
+                    id(topic_8_name) = lv_textarea_get_text(id(txt_topic_8_name));
+                    id(topic_8_address) = lv_textarea_get_text(id(txt_topic_8_address));
+
+                    lv_label_set_text(id(lbl_topic_8), id(topic_8_name).c_str());
+                    
+                - script.stop: settings_timeout
+                - lvgl.page.show:
+                    id: page_2
+            widgets:
+              - label:
+                  id: lbl_save_topic_settings_2
+                  align: CENTER
+                  text: "SAVE"
+                  text_color: 0x000000
+                  text_font: montserrat_20
+        
+    
+    - id: page_text_editor
+      bg_color: 0x000000
+      bg_opa: 100%
+      pad_all: 0
+      widgets:
+        - label:
+            id: lbl_text_editor_title
+            x: 20
+            y: 15
+            width: 280
+            text: "Edit value:"
+            text_color: 0xFFFFFF
+            text_font: montserrat_24
+            text_align: CENTER
+
+        - textarea:
+            id: txt_editor_value
+            x: 20
+            y: 55
+            width: 280
+            height: 50
+            one_line: true
+            bg_color: 0x151515
+            bg_opa: 100%
+            text_color: 0xFFFFFF
+            border_color: 0x87CEFA
+            border_width: 2
+            radius: 8
+
+        - keyboard:
+            id: editor_keyboard
+            align: TOP_LEFT
+            x: 0
+            y: 150
+            width: 320
+            height: 250
+            bg_color: 0x151515
+            text_color: 0xFFFFFF
+            on_ready:
+              then:
+                - lambda: |-
+                    const char *edited = lv_textarea_get_text(id(txt_editor_value));
+
+                    switch (id(active_edit_field)) {
+                      case 1:
+                        lv_textarea_set_text(id(txt_topic_1_name), edited);
+                        break;
+                      case 2:
+                        lv_textarea_set_text(id(txt_topic_1_address), edited);
+                        break;
+                      case 3:
+                        lv_textarea_set_text(id(txt_topic_2_name), edited);
+                        break;
+                      case 4:
+                        lv_textarea_set_text(id(txt_topic_2_address), edited);
+                        break;
+                      case 5:
+                        lv_textarea_set_text(id(txt_topic_3_name), edited);
+                        break;
+                      case 6:
+                        lv_textarea_set_text(id(txt_topic_3_address), edited);
+                        break;
+                      case 7:
+                        lv_textarea_set_text(id(txt_topic_4_name), edited);
+                        break;
+                      case 8:
+                        lv_textarea_set_text(id(txt_topic_4_address), edited);
+                        break;
+                      case 9:
+                        lv_textarea_set_text(id(txt_topic_5_name), edited);
+                        break;
+                      case 10:
+                        lv_textarea_set_text(id(txt_topic_5_address), edited);
+                        break;
+                      case 11:
+                        lv_textarea_set_text(id(txt_topic_6_name), edited);
+                        break;
+                      case 12:
+                        lv_textarea_set_text(id(txt_topic_6_address), edited);
+                        break;
+                      case 13:
+                        lv_textarea_set_text(id(txt_topic_7_name), edited);
+                        break;
+                      case 14:
+                        lv_textarea_set_text(id(txt_topic_7_address), edited);
+                        break;
+                      case 15:
+                        lv_textarea_set_text(id(txt_topic_8_name), edited);
+                        break;
+                      case 16:
+                        lv_textarea_set_text(id(txt_topic_8_address), edited);
+                        break;
+                    }
+
+                - if:
+                    condition:
+                      lambda: 'return id(return_settings_page) == 1;'
+                    then:
+                      - lvgl.page.show:
+                          id: page_topic_settings_1
+                    else:
+                      - lvgl.page.show:
+                          id: page_topic_settings_2
+
+            on_cancel:
+              then:
+                - if:
+                    condition:
+                      lambda: 'return id(return_settings_page) == 1;'
+                    then:
+                      - lvgl.page.show:
+                          id: page_topic_settings_1
+                    else:
+                      - lvgl.page.show:
+                          id: page_topic_settings_2
+
+interval:
+  - interval: 60s
+    then:
+      - lambda: |-
+          auto now = id(ha_time).now();
+          if (now.is_valid()) {
+            char time_str[6];
+            snprintf(time_str, sizeof(time_str), "%02d:%02d", now.hour, now.minute);
+
+            lv_label_set_text(id(lbl_time_page_1), time_str);
+            lv_label_set_text(id(lbl_time_page_2), time_str);
+          }
+
+
+sensor:
+  - platform: wifi_signal
+    name: "Smart Multi Switch WiFi Signal"
+    update_interval: 60s

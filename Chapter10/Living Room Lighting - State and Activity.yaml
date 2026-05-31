@@ -1,0 +1,55 @@
+alias: Living Room Lighting - State and Activity
+description: >-
+  Controls living room lighting based on occupancy state and current room
+  activity.
+triggers:
+  - trigger: state
+    entity_id:
+      - input_select.livingroom_states
+    to: occupied
+conditions: []
+actions:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: input_select.living_room_activity
+            state: watching_tv
+        sequence:
+          - action: scene.turn_on
+            metadata: {}
+            data: {}
+            target:
+              entity_id: scene.livingroom_tv_mode
+      - conditions:
+          - condition: state
+            entity_id: input_select.living_room_activity
+            state: reading
+        sequence:
+          - action: light.turn_on
+            metadata: {}
+            data:
+              brightness_pct: 80
+            target:
+              device_id: living_room_lights
+      - conditions:
+          - condition: state
+            entity_id: input_select.living_room_activity
+            state: relaxing
+        sequence:
+          - action: light.turn_on
+            metadata: {}
+            data:
+              brightness_pct: 40
+            target:
+              device_id: living_room_lights
+      - conditions:
+          - condition: state
+            entity_id: input_select.living_room_activity
+            state: normal
+        sequence:
+          - action: light.turn_on
+            metadata: {}
+            data: {}
+            target:
+              device_id: living_room_lights
+mode: single

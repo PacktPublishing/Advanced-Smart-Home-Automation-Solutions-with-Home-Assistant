@@ -1,0 +1,17 @@
+title: Motion Light Dashboard
+widget_dimensions: [120, 120]
+widget_margins: [6, 6]
+columns: 4
+
+motion_status:
+  widget_type: binary_sensor
+  title: Motion Sensor
+  entity: binary_sensor.bed_pir_sensor
+
+living_room_light:
+  widget_type: light
+  title: Living Room Light
+  entity: switch.change_this_name4
+
+layout:
+  - motion_status(2x1), living_room_light(2x1)

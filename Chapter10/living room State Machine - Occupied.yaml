@@ -1,0 +1,16 @@
+alias: Living Room State Machine - Occupied
+description: ""
+triggers:
+  - trigger: state
+    entity_id:
+      - binary_sensor.living_room_motion
+    to: "on"
+conditions: []
+actions:
+  - action: input_select.select_option
+    metadata: {}
+    data:
+      option: occupied
+    target:
+      entity_id: input_select.living_room_states
+mode: single

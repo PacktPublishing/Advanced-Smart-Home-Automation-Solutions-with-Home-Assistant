@@ -1,0 +1,25 @@
+alias: Home Status Override Auto Reset
+description: Returns home status override to auto after temporary modes
+triggers:
+  - trigger: state
+    entity_id:
+      - input_select.home_status_override
+    to: party
+  - trigger: state
+    entity_id:
+      - input_select.home_status_override
+    to: exempt
+conditions: []
+actions:
+  - delay:
+      hours: 6
+      minutes: 0
+      seconds: 0
+      milliseconds: 0
+  - action: input_select.select_option
+    metadata: {}
+    data:
+      option: auto
+    target:
+      entity_id: input_select.home_status_override
+mode: single

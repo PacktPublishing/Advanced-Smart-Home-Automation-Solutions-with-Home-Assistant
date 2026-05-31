@@ -1,0 +1,22 @@
+alias: Living Room State Machine - Idle
+description: ""
+triggers:
+  - trigger: state
+    entity_id:
+      - binary_sensor.living_room_motion
+    to: "off"
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+conditions:
+  - condition: state
+    entity_id: input_select.living_room_states
+    state: occupied
+actions:
+  - action: input_select.select_option
+    target:
+      entity_id: input_select.livingroom_states
+    data:
+      option: idle
+mode: single
