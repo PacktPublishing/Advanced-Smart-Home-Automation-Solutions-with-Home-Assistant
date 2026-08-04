@@ -1,0 +1,11 @@
+alias: AI Appliance Trend Review Every 10 Days
+description: ""
+triggers:
+  - trigger: time
+    at: "08:00:00"
+conditions:
+  - condition: template
+    value_template: "{{ now().timetuple().tm_yday % 10 == 0 }}"
+actions:
+  - action: script.analyze_appliance_trends_with_ai
+mode: single

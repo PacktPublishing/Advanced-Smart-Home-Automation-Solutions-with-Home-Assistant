@@ -1,0 +1,33 @@
+alias: AI - Analyze Dishwasher Usage Habit
+description: ""
+triggers:
+  - trigger: time
+    at: "08:00:00"
+conditions: []
+actions:
+  - action: homeassistant.update_entity
+    metadata: {}
+    data:
+      entity_id:
+        - sensor.dishwasher_ml_prediction
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - condition: state
+    state:
+      - shift_recommended
+    entity_id: sensor.dishwasher_ml_prediction
+  - action: notify.mobile_app_iphone_381
+    metadata: {}
+    data:
+      title: Learned Dishwasher Habit
+      message: >-
+        {{ state_attr(           'sensor.dishwasher_ml_prediction',          
+        'recommendation'         ) }}          Learned usage time:         {{
+        state_attr(           'sensor.dishwasher_ml_prediction',          
+        'predicted_time'         ) }}.          Pattern support:         {{
+        state_attr(           'sensor.dishwasher_ml_prediction',          
+        'support_percent'         ) }}%.
+mode: single

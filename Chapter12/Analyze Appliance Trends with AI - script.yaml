@@ -1,0 +1,302 @@
+alias: Analyze Appliance Trends with AI
+mode: single
+sequence:
+  - action: homeassistant.update_entity
+    target:
+      entity_id: sensor.appliance_usage_sessions_10d
+  - delay:
+      seconds: 5
+  - action: ai_task.generate_data
+    response_variable: appliance_ai_result
+    data:
+      entity_id: ai_task.openai_ai_task
+      task_name: appliance_usage_trend_analysis
+      instructions: |-
+        You are analyzing Home Assistant appliance usage sessions.
+
+          Appliance session summary:
+          {{ state_attr('sensor.appliance_usage_sessions_10d', 'summary') }}
+
+          Based only on the supplied data, return learned expected usage windows and recommended usage windows.
+
+          Definitions:
+          - expected_start and expected_end represent the normal learned usage window.
+          - recommended_start and recommended_end represent the preferred usage window considering TEP tariffs and practical use.
+          - Use 24-hour HH:MM format only, such as 18:00 or 21:30.
+          - Do not include AM, PM, seconds, dates, or explanatory text in time fields.
+          - If there is not enough data for an appliance, return 00:00 for start and 00:00 for end and set confidence to low.
+
+          Return time windows for:
+          - dishwasher
+          - washing_machine
+          - airfryer
+          - sandwich_grill
+      structure:
+        dishwasher_expected_start:
+          description: Dishwasher expected usage start time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        dishwasher_expected_end:
+          description: Dishwasher expected usage end time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        dishwasher_recommended_start:
+          description: Dishwasher recommended usage start time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        dishwasher_recommended_end:
+          description: Dishwasher recommended usage end time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        wash_machine_expected_start:
+          description: Washing machine expected usage start time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        wash_machine_expected_end:
+          description: Washing machine expected usage end time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        wash_machine_recommended_start:
+          description: >-
+            Washing machine recommended usage start time in 24-hour HH:MM
+            format.
+          required: true
+          selector:
+            text: null
+        wash_machine_recommended_end:
+          description: Washing machine recommended usage end time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        airfryer_expected_start:
+          description: Air fryer expected usage start time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        airfryer_expected_end:
+          description: Air fryer expected usage end time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        airfryer_recommended_start:
+          description: Air fryer recommended usage start time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        airfryer_recommended_end:
+          description: Air fryer recommended usage end time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        sandwich_grill_expected_start:
+          description: Sandwich grill expected usage start time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        sandwich_grill_expected_end:
+          description: Sandwich grill expected usage end time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        sandwich_grill_recommended_start:
+          description: Sandwich grill recommended usage start time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        sandwich_grill_recommended_end:
+          description: Sandwich grill recommended usage end time in 24-hour HH:MM format.
+          required: true
+          selector:
+            text: null
+        dishwasher_confidence:
+          description: >-
+            Confidence level for the dishwasher trend analysis are low, medium,
+            or high.
+          required: true
+          selector:
+            select:
+              options:
+                - low
+                - medium
+                - high
+        wash_machine_confidence:
+          description: >-
+            Confidence level for the washing machine trend analysis are low,
+            medium, or high.
+          required: true
+          selector:
+            select:
+              options:
+                - low
+                - medium
+                - high
+        airfryer_confidence:
+          description: >-
+            Confidence level for the air fryer trend analysis are low, medium,
+            or high.
+          required: true
+          selector:
+            select:
+              options:
+                - low
+                - medium
+                - high
+        sandwich_grill_confidence:
+          description: >-
+            Confidence level for the sandwich grill trend analysis are low,
+            medium, or high.
+          required: true
+          selector:
+            select:
+              options:
+                - low
+                - medium
+                - high
+        summary:
+          description: >-
+            Short explanation of the appliance trend analysis and tariff
+            optimization recommendations.
+          required: true
+          selector:
+            text: null
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.dishwasher_expected_start
+    data:
+      time: "{{ appliance_ai_result.data.dishwasher_expected_start }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.dishwasher_expected_end
+    data:
+      time: "{{ appliance_ai_result.data.dishwasher_expected_end }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.dishwasher_recommended_start
+    data:
+      time: "{{ appliance_ai_result.data.dishwasher_recommended_start }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.dishwasher_recommended_end
+    data:
+      time: "{{ appliance_ai_result.data.dishwasher_recommended_end }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.wash_machine_expected_start
+    data:
+      time: "{{ appliance_ai_result.data.wash_machine_expected_start }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.wash_machine_expected_end
+    data:
+      time: "{{ appliance_ai_result.data.wash_machine_expected_end }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.wash_machine_recommended_start
+    data:
+      time: "{{ appliance_ai_result.data.wash_machine_recommended_start }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.wash_machine_recommended_end
+    data:
+      time: "{{ appliance_ai_result.data.wash_machine_recommended_end }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.airfryer_expected_start
+    data:
+      time: "{{ appliance_ai_result.data.airfryer_expected_start }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.airfryer_expected_end
+    data:
+      time: "{{ appliance_ai_result.data.airfryer_expected_end }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.airfryer_recommended_start
+    data:
+      time: "{{ appliance_ai_result.data.airfryer_recommended_start }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.airfryer_recommended_end
+    data:
+      time: "{{ appliance_ai_result.data.airfryer_recommended_end }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.sandwich_grill_expected_start
+    data:
+      time: "{{ appliance_ai_result.data.sandwich_grill_expected_start }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.sandwich_grill_expected_end
+    data:
+      time: "{{ appliance_ai_result.data.sandwich_grill_expected_end }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.sandwich_grill_recommended_start
+    data:
+      time: "{{ appliance_ai_result.data.sandwich_grill_recommended_start }}:00"
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.sandwich_grill_recommended_end
+    data:
+      time: "{{ appliance_ai_result.data.sandwich_grill_recommended_end }}:00"
+  - action: input_select.select_option
+    target:
+      entity_id:
+        - input_select.dishwasher_ai_confidence
+    data:
+      option: "{{ appliance_ai_result.data.dishwasher_confidence }}"
+  - action: persistent_notification.create
+    data:
+      title: AI Appliance Trend Analysis
+      message: >
+        {{ appliance_ai_result.data.summary }}
+
+        Dishwasher: Expected usage: {{
+        appliance_ai_result.data.dishwasher_expected_start }} to {{
+        appliance_ai_result.data.dishwasher_expected_end }}
+
+        Recommended usage: {{
+        appliance_ai_result.data.dishwasher_recommended_start }} to {{
+        appliance_ai_result.data.dishwasher_recommended_end }}
+
+        Confidence: {{ appliance_ai_result.data.dishwasher_confidence }}
+
+
+        Washing machine: Expected usage: {{
+        appliance_ai_result.data.wash_machine_expected_start }} to {{
+        appliance_ai_result.data.wash_machine_expected_end }}
+
+        Recommended usage: {{
+        appliance_ai_result.data.wash_machine_recommended_start }} to {{
+        appliance_ai_result.data.wash_machine_recommended_end }}
+
+        Confidence: {{ appliance_ai_result.data.wash_machine_confidence }}
+
+
+        Air fryer: Expected usage: {{
+        appliance_ai_result.data.airfryer_expected_start }} to {{
+        appliance_ai_result.data.airfryer_expected_end }}
+
+        Recommended usage: {{
+        appliance_ai_result.data.airfryer_recommended_start }} to {{
+        appliance_ai_result.data.airfryer_recommended_end }}
+
+        Confidence: {{ appliance_ai_result.data.airfryer_confidence }}
+
+
+        Sandwich grill: Expected usage: {{
+        appliance_ai_result.data.sandwich_grill_expected_start }} to {{
+        appliance_ai_result.data.sandwich_grill_expected_end }}
+
+        Recommended usage: {{
+        appliance_ai_result.data.sandwich_grill_recommended_start }} to {{
+        appliance_ai_result.data.sandwich_grill_recommended_end }}
+
+        Confidence: {{ appliance_ai_result.data.sandwich_grill_confidence }}
+description: ""

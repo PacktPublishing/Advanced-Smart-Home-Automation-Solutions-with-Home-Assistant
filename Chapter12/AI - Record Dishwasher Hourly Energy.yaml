@@ -1,0 +1,40 @@
+alias: AI - Record Dishwasher Hourly Energy
+description: ""
+triggers:
+  - trigger: time_pattern
+    minutes: "59"
+    seconds: "50"
+conditions: []
+actions:
+  - action: shell_command.record_dishwasher_hourly_energy
+    metadata: {}
+    data: {}
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - action: homeassistant.update_entity
+    metadata: {}
+    data:
+      entity_id:
+        - sensor.dishwasher_rule_analysis
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  - condition: template
+    value_template: |-
+      {{ state_attr(
+              'sensor.dishwasher_rule_analysis',
+              'estimated_savings'
+            ) | float(0) > 0.02 }}
+  - action: notify.mobile_app_iphone_381
+    metadata: {}
+    data:
+      title: Dishwasher Schedule Suggestion
+      message: >-
+        {{ state_attr(           'sensor.dishwasher_rule_analysis',          
+        'reason'         ) }}
+mode: single
