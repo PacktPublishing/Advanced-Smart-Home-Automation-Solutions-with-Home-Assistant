@@ -28,14 +28,6 @@ conditions:
 
 actions: 
 
-  - action: script.turn_on_off_garagemotor_script 
-
-    metadata: {} 
-
-    data: {} 
-
-    enabled: false 
-
   - action: input_boolean.turn_off 
 
     metadata: {} 
