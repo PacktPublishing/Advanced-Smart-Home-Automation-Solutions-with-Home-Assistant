@@ -18,17 +18,25 @@
 - name: "North Temperature Average"
   unit_of_measurement: "°C"
   state: >
+    {# Get all north sensors #} 
     {% set rooms_north = expand('group.all_north_temperature') %}
+    {# Convert states to numbers #}
     {% set values_north = rooms_north | map(attribute='state') | map('float', default=0) | list %}
+    {# Count valid readings #}
     {% set count_north = values_north | select('ne', 0) | list | length %}
+    {# Compute average #} 
     {{ (values_north | sum / (count_north if count_north>0 else 1)) | round(1) }}
 
 - name: "South Temperature Average"
   unit_of_measurement: "°C"
   state: >
+    {# Get all north sensors #} 
     {% set rooms_south = expand('group.all_south_temperature') %}
+    {# Convert states to numbers #}
     {% set values_south = rooms_south | map(attribute='state') | map('float', default=0) | list %}
+    {# Count valid readings #}
     {% set count_south = values_south | select('ne', 0) | list | length %}
+    {# Compute average #} 
     {{ (values_south | sum / (count_south if count_south>0 else 1)) | round(1) }}
     
 - name: "Internal Temperature Average"
@@ -121,4 +129,5 @@
     {% set hour  = now().hour + now().minute/60 %}
     {% set daily_avg = spent / (hour|max(0.1)/24) %}
     {{ (daily_avg * 30) | round(0) }}
-    
+
+

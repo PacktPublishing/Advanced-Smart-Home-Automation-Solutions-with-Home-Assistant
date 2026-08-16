@@ -1,0 +1,43 @@
+alias: Thermostat smart gate
+
+# Trigger when indoor temperature exceeds 25°C triggers:
+  - trigger: numeric_state
+    entity_id:
+      - sensor.internal_temperature_average
+    above: 25
+conditions: []
+actions:
+  # Store values used later in the automation 
+  - variables:
+      at_home: "{{ is_state('person.your_name_and_family_name', 'home') }}"
+      door_open: "{{ is_state('group.all_door','on') }}"
+  
+  # Evaluate the current conditions 
+  - choose:
+      # If a door is open, notify the user
+      - conditions:
+          - condition: template
+            value_template: "{{ door_open }}"
+        sequence:
+          - action: notify.mobile_app_iphone_381
+            data:
+              data: Some door is open — Thermostat not started.
+
+      # Otherwise, if someone is home, start the thermostat
+      - conditions:
+          - condition: template
+            value_template: "{{ at_home }}"
+        sequence:
+          - action: climate.set_temperature
+            data:
+              temperature: 23
+            target:
+              entity_id: climate.nest_south
+    
+    # Otherwise, just log the event
+    default:
+      - action: logbook.log
+        data:
+          name: Thermostat smart gate
+          message: No one home — skipped.
+mode: single
