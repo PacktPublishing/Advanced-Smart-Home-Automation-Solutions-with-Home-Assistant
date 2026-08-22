@@ -1,0 +1,180 @@
+# >>> LVGL Designer - generated from the canvas. >>>
+# This block is regenerated from the canvas - edits here are not preserved.
+lvgl:
+  pages:
+    - id: canvas_1
+      bg_color: 0x000000
+      bg_opa: 100%
+      pad_all: 0
+      scrollbar_mode: "OFF"
+      widgets:
+        - obj:
+            id: dv_card_1
+            x: 40
+            y: 85
+            width: 240
+            height: 10
+            bg_color: 0x070E1B
+            bg_opa: 0%
+            border_width: 0
+            radius: 0
+            pad_all: 0
+            widgets:
+              - bar:
+                  id: dv_line
+                  x: 0
+                  y: 6
+                  width: 240
+                  height: 2
+                  value: 100
+                  min_value: 0
+                  max_value: 100
+                  animated: false
+                  indicator:
+                    bg_color: 0x8E9FB8
+                    bg_opa: 70%
+                    radius: 0
+                  bg_color: 0x8E9FB8
+                  bg_opa: 40%
+                  radius: 9999
+
+        - button:
+            id: lv_button_2
+            x: 55
+            y: 105
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            text_color: 0x080807
+            widgets:
+              - label:
+                  align: CENTER
+                  text: "Topic1"
+                  text_color: 0x080807
+
+        - button:
+            id: widget_1776744346330_p6pxa8946
+            x: 55
+            y: 185
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            text_color: 0x080807
+            widgets:
+              - label:
+                  align: CENTER
+                  text: "Topic2"
+                  text_color: 0x080807
+
+        - button:
+            id: widget_1776744350349_eo2j1sk9o
+            x: 55
+            y: 265
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            text_color: 0x080807
+            widgets:
+              - label:
+                  align: CENTER
+                  text: "Topic3"
+                  text_color: 0x080807
+
+        - button:
+            id: widget_1776744356593_p5qxy4b3w
+            x: 55
+            y: 345
+            width: 210
+            height: 60
+            bg_color: 0xFFFFFF
+            border_color: 0x000000
+            text_color: 0x080807
+            widgets:
+              - label:
+                  align: CENTER
+                  text: "Topic4"
+                  text_color: 0x080807
+
+        - label:
+            id: lv_label_5
+            x: 55
+            y: 35
+            width: 208
+            height: 30
+            text: "Smart Multi Switch"
+            text_color: 0xFFFFFF
+            text_align: CENTER
+            text_font: montserrat_24
+
+        - obj:
+            id: bnb_bar
+            x: 0
+            y: 432
+            width: 320
+            height: 48
+            bg_color: 0xF4F5F5
+            bg_opa: 95%
+            border_width: 0
+            radius: 0
+            pad_all: 0
+            widgets:
+              - label:
+                  id: bnb_icon0
+                  x: 0
+                  y: 8
+                  width: 100
+                  height: 32
+                  text: "\uF053"
+                  text_font: montserrat_40
+                  text_align: CENTER
+                  text_color: 0x080807
+              - label:
+                  id: bnb_icon1
+                  x: 109
+                  y: 8
+                  width: 100
+                  height: 32
+                  text: "\uF013"
+                  text_font: montserrat_32
+                  text_align: CENTER
+                  text_color: 0x080807
+              - label:
+                  id: bnb_icon2
+                  x: 220
+                  y: 8
+                  width: 100
+                  height: 32
+                  text: "\uF054"
+                  text_font: montserrat_40
+                  text_align: CENTER
+                  text_color: 0x080807
+
+        - label:
+            id: lv_icon_7
+            x: 260
+            y: 12
+            width: 28
+            height: 18
+            text: "\uF1EB"
+            text_font: montserrat_14
+            text_align: CENTER
+            text_color: 0x808080
+
+        - label:
+            id: lv_label_10
+            x: 290
+            y: 12
+            width: 28
+            height: 28
+            text: "M"
+            text_color: 0x808080
+
+        - label:
+            id: lv_label_11
+            x: 8
+            y: 12
+            width: 80
+            height: 28
+            text: "HH:MM"
+            text_color: 0x808080
+# <<< end LVGL Designer block <<<

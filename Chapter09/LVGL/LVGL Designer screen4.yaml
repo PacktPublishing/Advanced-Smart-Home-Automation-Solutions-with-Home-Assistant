@@ -1,0 +1,198 @@
+# >>> LVGL Designer - generated from the canvas. >>>
+# This block is regenerated from the canvas - edits here are not preserved.
+lvgl:
+  pages:
+    - id: canvas_4
+      bg_color: 0x000000
+      bg_opa: 100%
+      pad_all: 0
+      scrollbar_mode: "OFF"
+      widgets:
+        - label:
+            id: lbl_topic_settings_2_title
+            x: 45
+            y: 20
+            text: "Topic Settings (5 - 8)"
+            text_color: 0xFFFFFF
+            text_font: montserrat_24
+
+        - obj:
+            id: topic_settings_2_divider
+            x: 20
+            y: 65
+            width: 280
+            height: 2
+            bg_color: 0x87CEFA
+            border_width: 0
+            radius: 0
+            pad_all: 0
+
+        - label:
+            id: lbl_topic_settings_2_description
+            x: 20
+            y: 80
+            width: 280
+            text: "Button names and MQTT topics."
+            text_color: 0xFFFFFF
+            text_font: montserrat_14
+
+        - label:
+            id: lbl_topic_5_settings
+            x: 20
+            y: 115
+            text: "Topic 5"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_5_name
+            x: 20
+            y: 145
+            width: 125
+            height: 38
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            border_width: 1
+            border_color: 0x808080
+            radius: 6
+            text_color: 0xFFFFFF
+
+        - textarea:
+            id: txt_topic_5_address
+            x: 155
+            y: 145
+            width: 145
+            height: 38
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            border_width: 1
+            border_color: 0x808080
+            radius: 6
+            text_color: 0xFFFFFF
+
+        - label:
+            id: lbl_topic_6_settings
+            x: 20
+            y: 195
+            text: "Topic 6"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_6_name
+            x: 20
+            y: 225
+            width: 125
+            height: 38
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            border_width: 1
+            border_color: 0x808080
+            radius: 6
+            text_color: 0xFFFFFF
+
+        - textarea:
+            id: txt_topic_6_address
+            x: 155
+            y: 225
+            width: 145
+            height: 38
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            border_width: 1
+            border_color: 0x808080
+            radius: 6
+            text_color: 0xFFFFFF
+
+        - label:
+            id: lbl_topic_7_settings
+            x: 20
+            y: 275
+            text: "Topic 7"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_7_name
+            x: 20
+            y: 305
+            width: 125
+            height: 38
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            border_width: 1
+            border_color: 0x808080
+            radius: 6
+            text_color: 0xFFFFFF
+
+        - textarea:
+            id: txt_topic_7_address
+            x: 155
+            y: 305
+            width: 145
+            height: 38
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            border_width: 1
+            border_color: 0x808080
+            radius: 6
+            text_color: 0xFFFFFF
+
+        - label:
+            id: lbl_topic_8_settings
+            x: 20
+            y: 355
+            text: "Topic 8"
+            text_color: 0x87CEFA
+            text_font: montserrat_18
+
+        - textarea:
+            id: txt_topic_8_name
+            x: 20
+            y: 385
+            width: 125
+            height: 38
+            placeholder_text: "Name"
+            one_line: true
+            bg_color: 0x151515
+            border_width: 1
+            border_color: 0x808080
+            radius: 6
+            text_color: 0xFFFFFF
+
+        - textarea:
+            id: txt_topic_8_address
+            x: 155
+            y: 385
+            width: 145
+            height: 38
+            placeholder_text: "MQTT Topic"
+            one_line: true
+            bg_color: 0x151515
+            border_width: 1
+            border_color: 0x808080
+            radius: 6
+            text_color: 0xFFFFFF
+
+        - button:
+            id: btn_save_topic_settings_2
+            x: 80
+            y: 438
+            width: 160
+            height: 38
+            bg_color: 0x87CEFA
+            border_width: 0
+            radius: 8
+            text_color: 0x000000
+            widgets:
+              - label:
+                  align: CENTER
+                  text: "SAVE"
+                  text_color: 0x000000
+# <<< end LVGL Designer block <<<
