@@ -49,8 +49,7 @@
 <details open>
   <summary><h2>Chapters</h2></summary>
 
-  <img src="https://cliply.co/wp-content/uploads/2020/02/372002150_DOCUMENTS_400px.gif" alt="Advanced Smart Home Automation Solutions with Home Assistant, First Edition" height="556px" align="right">
-
+  
   <ol>
     <li>Home Assistant Architecture and Performance Optimization</li>
     <li>Mastering YAML for Complex Home Assistant Configurations</li>
@@ -100,7 +99,7 @@
 </details>
 
 <details>
-  <summary><h2>Get to know Author</h2></summary>
+  <summary><h2>Get to know the author</h2></summary>
 
   *Marco Carvalho* is an electronics engineer with over 25 years of experience in the electronics manufacturing industry. With a master's degree in computer science, he specializes in product development, NPI, and hardware-software integration across medical, mining, and tech sectors. Passionate about IoT and home automation, he enjoys developing custom smart systems and previously authored a book on building smart homes with Home Assistant.
 
